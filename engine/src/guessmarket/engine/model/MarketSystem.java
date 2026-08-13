@@ -1,5 +1,7 @@
 package guessmarket.engine.model;
 
+import java.io.Serializable;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,7 +16,9 @@ import java.util.Map;
  * in -- which is how "a broken file must not overwrite the good one already
  * loaded" is enforced, without any rollback logic.
  */
-public class MarketSystem {
+public class MarketSystem implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final Map<Integer, Event> eventsById = new LinkedHashMap<>();
     private final Account managerAccount = new Account();

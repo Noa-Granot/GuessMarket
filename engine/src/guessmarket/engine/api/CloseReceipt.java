@@ -5,6 +5,6 @@ public record CloseReceipt(String winningOptionName,
                            double grossPayout,
                            double commission,
                            double netPayout,
-                           double returnedToManager,
+                           double remainingInEventAccount,
                            EventStateDto stateAfter) {
 }

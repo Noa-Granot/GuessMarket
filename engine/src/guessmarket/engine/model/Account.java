@@ -1,5 +1,7 @@
 package guessmarket.engine.model;
 
+import java.io.Serializable;
+
 /**
  * A balance that money moves in and out of. Used twice in exercise 1: once per
  * event (the event's own "contract" account) and once for the events manager,
@@ -10,7 +12,9 @@ package guessmarket.engine.model;
  * has unlimited funds. Exercise 2 introduces per-user balances that must not go
  * negative, which is where a guard belongs.
  */
-public class Account {
+public class Account implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private double balance;
 
@@ -38,12 +42,5 @@ public class Account {
             throw new IllegalArgumentException("Cannot withdraw a negative amount");
         }
         balance -= amount;
-    }
-
-    /** Empties the account and returns whatever was in it. */
-    public double drain() {
-        double remaining = balance;
-        balance = 0.0;
-        return remaining;
     }
 }

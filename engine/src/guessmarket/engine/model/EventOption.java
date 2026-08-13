@@ -1,5 +1,7 @@
 package guessmarket.engine.model;
 
+import java.io.Serializable;
+
 /**
  * One possible outcome of an event, e.g. "YES".
  *
@@ -7,7 +9,9 @@ package guessmarket.engine.model;
  * been bought so far, but NOT its own price. Under LMSR a price is a function
  * of every option's quantity together, so pricing belongs to LmsrMarket.
  */
-public class EventOption {
+public class EventOption implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final String name;
     private long sharesBought;

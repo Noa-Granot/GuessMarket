@@ -5,6 +5,8 @@ import guessmarket.engine.model.Event;
 import guessmarket.engine.model.EventOption;
 import guessmarket.engine.model.MarketSystem;
 import guessmarket.engine.model.Transaction;
+import guessmarket.engine.persistence.SystemStateStore;
+import guessmarket.engine.xml.XmlLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +20,9 @@ import java.util.List;
  */
 public class GuessMarketEngineImpl implements GuessMarketEngine {
 
+    private final XmlLoader loader = new XmlLoader();
+    private final SystemStateStore stateStore = new SystemStateStore();
+
     private MarketSystem system = null;
 
     @Override
@@ -25,11 +30,16 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
         return system != null;
     }
 
+    /**
+     * The assignment on the last line is the whole reason a bad file cannot
+     * damage a good one: if the loader throws, we never reach it and the
+     * previously loaded system is still in place, untouched.
+     */
     @Override
-    public void loadDemoData() {
-        MarketSystem candidate = DemoData.build();
-        candidate.paySubsidies();
+    public int loadFile(String path) {
+        MarketSystem candidate = loader.load(path);
         this.system = candidate;
+        return candidate.getEvents().size();
     }
 
     @Override
@@ -88,7 +98,6 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
 
     @Override
     public CloseReceipt close(int eventId, int winningOptionIndex) {
-        MarketSystem loaded = requireLoaded();
         Event event = findEvent(eventId);
         CloseOutcome outcome;
         try {
@@ -96,19 +105,34 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
         } catch (RuntimeException e) {
             throw new EngineException(e.getMessage(), e);
         }
-        loaded.getManagerAccount().deposit(outcome.leftoverForManager());
         return new CloseReceipt(
                 outcome.winningOptionName(),
                 outcome.grossPayout(),
                 outcome.commission(),
                 outcome.netPayout(),
-                outcome.leftoverForManager(),
+                outcome.remainingBalance(),
                 toStateDto(event));
     }
 
     @Override
     public double managerBalance() {
         return requireLoaded().getManagerAccount().getBalance();
+    }
+
+    @Override
+    public void saveState(String pathWithoutExtension) {
+        stateStore.save(pathWithoutExtension, requireLoaded());
+    }
+
+    /**
+     * Same guarantee as loadFile: the assignment happens only if the restore
+     * succeeded, so a bad save file leaves the running system alone.
+     */
+    @Override
+    public int loadState(String pathWithoutExtension) {
+        MarketSystem restored = stateStore.load(pathWithoutExtension);
+        this.system = restored;
+        return restored.getEvents().size();
     }
 
     private MarketSystem requireLoaded() {

@@ -5,6 +5,7 @@ import guessmarket.engine.api.EngineException;
 import guessmarket.engine.api.EventDto;
 import guessmarket.engine.api.EventStateDto;
 import guessmarket.engine.api.GuessMarketEngine;
+import guessmarket.engine.api.LoadException;
 import guessmarket.engine.api.OptionStateDto;
 import guessmarket.engine.api.PurchaseReceipt;
 import guessmarket.engine.api.TransactionDto;
@@ -40,10 +41,12 @@ class ConsoleUi {
 
         while (running) {
             printMenu();
-            int choice = input.readIntInRange("Choose a command (1-6): ", 1, 6);
+            int choice = input.readIntInRange("Choose a command (1-8): ", 1, 8);
             System.out.println();
             try {
                 dispatch(choice);
+            } catch (LoadException e) {
+                printLoadFailure(e);
             } catch (EngineException e) {
                 System.out.println("Cannot do that: " + e.getMessage());
             }
@@ -59,6 +62,8 @@ class ConsoleUi {
         System.out.println("4. Participate in an event");
         System.out.println("5. Close an event");
         System.out.println("6. Exit");
+        System.out.println("7. Save the current system to a file");
+        System.out.println("8. Restore a system from a saved file");
         System.out.println("--------------------------------");
     }
 
@@ -70,6 +75,8 @@ class ConsoleUi {
             case 4 -> participate();
             case 5 -> closeEvent();
             case 6 -> exit();
+            case 7 -> saveState();
+            case 8 -> restoreState();
             default -> System.out.println("Unknown command.");
         }
     }
@@ -77,11 +84,35 @@ class ConsoleUi {
     // ---------- command 1 ----------
 
     private void loadFile() {
-        System.out.println("The XML loader is not built yet.");
-        System.out.println("Loading the built-in demo events instead so the other commands can be tried.");
-        engine.loadDemoData();
-        System.out.println("Loaded " + engine.listEvents().size() + " demo events.");
-        System.out.printf("Manager account after paying subsidies: " + MONEY + "%n", engine.managerBalance());
+        System.out.println("Enter the full path of the XML file to load.");
+        System.out.println("The path may contain spaces; there is no need to add quotes.");
+        String path = input.readLine("Path: ");
+
+        int loaded = engine.loadFile(path);
+
+        System.out.println();
+        System.out.println("The file is valid and was loaded in full.");
+        System.out.println("Events loaded: " + loaded);
+        System.out.printf("Market maker funding committed across all events: " + MONEY + "%n",
+                -engine.managerBalance());
+    }
+
+    /**
+     * A failed load lists every problem at once, so a broken file can be fixed
+     * in one pass instead of one reload per mistake.
+     */
+    private void printLoadFailure(LoadException e) {
+        System.out.println("The file was not loaded.");
+        System.out.println(e.getMessage());
+        if (!e.getProblems().isEmpty()) {
+            System.out.println();
+            System.out.println("Problems found:");
+            for (String problem : e.getProblems()) {
+                System.out.println("  - " + problem);
+            }
+        }
+        System.out.println();
+        System.out.println("Whatever was loaded before is still in place and can still be used.");
     }
 
     // ---------- command 2 ----------
@@ -207,7 +238,7 @@ class ConsoleUi {
         System.out.println("Event closed. Winning option: " + receipt.winningOptionName());
         System.out.printf("  Paid to winners:      " + MONEY + "%n", receipt.netPayout());
         System.out.printf("  Commission taken:     " + MONEY + "%n", receipt.commission());
-        System.out.printf("  Returned to manager:  " + MONEY + "%n", receipt.returnedToManager());
+        System.out.printf("  Remaining in event account: " + MONEY + "%n", receipt.remainingInEventAccount());
         System.out.println();
         printEventState(receipt.stateAfter());
     }
@@ -217,6 +248,31 @@ class ConsoleUi {
     private void exit() {
         System.out.println("Goodbye.");
         running = false;
+    }
+
+    // ---------- commands 7 and 8 (bonus) ----------
+
+    private void saveState() {
+        System.out.println("Enter the full path and file name to save to, without an extension.");
+        System.out.println("For example: C:\\CS_Degree\\my session");
+        String path = input.readLine("Path: ");
+
+        engine.saveState(path);
+
+        System.out.println();
+        System.out.println("The system was saved, including the full trade history.");
+    }
+
+    private void restoreState() {
+        System.out.println("Enter the full path and file name of the saved system, without an extension.");
+        System.out.println("This restores a session saved earlier; it does not read an exercise XML file.");
+        String path = input.readLine("Path: ");
+
+        int restored = engine.loadState(path);
+
+        System.out.println();
+        System.out.println("The saved system was restored in full.");
+        System.out.println("Events restored: " + restored);
     }
 
     // ---------- shared ----------

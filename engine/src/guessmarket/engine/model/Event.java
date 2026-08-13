@@ -1,5 +1,7 @@
 package guessmarket.engine.model;
 
+import java.io.Serializable;
+
 import guessmarket.engine.pricing.LmsrMarket;
 
 import java.util.ArrayList;
@@ -13,7 +15,9 @@ import java.util.List;
  * All option indexes on this class are 0-based. Converting to and from the
  * 1-based numbers the exercise requires on screen is the UI's job.
  */
-public class Event {
+public class Event implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /** Every winning share pays out one dollar. */
     public static final double PAYOUT_PER_SHARE = 1.0;
@@ -172,8 +176,11 @@ public class Event {
 
     /**
      * Decides the event. Winners are paid one dollar per share they hold; if the
-     * commission is charged on close, it is taken off that payout first. The
-     * account is then emptied and whatever is left goes back to the manager.
+     * commission is charged on close, it is taken off that payout first.
+     *
+     * The account is deliberately NOT emptied afterwards. Whatever remains is
+     * the market maker's standing position in this event, and command 3 is
+     * expected to show it.
      */
     public CloseOutcome close(int winningOptionIndex) {
         if (status == EventStatus.CLOSED) {
@@ -190,12 +197,11 @@ public class Event {
 
         commissionCollected += commission;
         account.withdraw(net);
-        double leftover = account.drain();
 
         status = EventStatus.CLOSED;
         winningOptionName = winner.getName();
 
-        return new CloseOutcome(winner.getName(), gross, commission, net, leftover);
+        return new CloseOutcome(winner.getName(), gross, commission, net, account.getBalance());
     }
 
     private void validateOptionIndex(int optionIndex) {

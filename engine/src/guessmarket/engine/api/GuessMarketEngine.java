@@ -18,8 +18,15 @@ public interface GuessMarketEngine {
     /** True once a valid file (or the demo data) has been loaded. */
     boolean isLoaded();
 
-    /** Temporary stand-in for loadFile, used until the XML loader exists. */
-    void loadDemoData();
+    /**
+     * Reads the file at the given path and replaces whatever is currently
+     * loaded. If anything is wrong the current system is left untouched and a
+     * LoadException is thrown carrying every problem found.
+     *
+     * @param path full path to an .xml file, as typed by the user
+     * @return how many events were loaded
+     */
+    int loadFile(String path);
 
     List<EventDto> listEvents();
 
@@ -36,4 +43,20 @@ public interface GuessMarketEngine {
     CloseReceipt close(int eventId, int winningOptionIndex);
 
     double managerBalance();
+
+    /**
+     * BONUS: writes the whole system, trade history included, to a file.
+     *
+     * @param pathWithoutExtension full path and file name, with no extension;
+     *                             the engine supplies its own
+     */
+    void saveState(String pathWithoutExtension);
+
+    /**
+     * BONUS: restores a system previously written by saveState, replacing
+     * whatever is loaded. Unlike loadFile this does not read the exercise XML.
+     *
+     * @return how many events were restored
+     */
+    int loadState(String pathWithoutExtension);
 }

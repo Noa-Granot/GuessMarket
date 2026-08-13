@@ -1,5 +1,7 @@
 package guessmarket.engine.pricing;
 
+import java.io.Serializable;
+
 /**
  * The Logarithmic Market Scoring Rule, and the only place in the system where
  * the LMSR formulae live.
@@ -13,7 +15,9 @@ package guessmarket.engine.pricing;
  * maximum exponent before calling Math.exp). Without it, a large q/b ratio
  * overflows to Infinity and every price silently becomes NaN.
  */
-public class LmsrMarket {
+public class LmsrMarket implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final int b;
 
