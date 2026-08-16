@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Guess-Market>
+    <GM-events>
+        <GM-event name="Duplicate id, commission too high">
+            <id>7</id>
+            <description>   spaced out description   </description>
+            <comision type="on-purchase">95</comision>
+            <GM-options>
+                <GM-option>YES</GM-option>
+                <GM-option>NO</GM-option>
+            </GM-options>
+            <GM-method>
+                <GM-LMSR>
+                    <b>100</b>
+                </GM-LMSR>
+            </GM-method>
+        </GM-event>
+        <GM-event name="Only one option, b is zero, unknown type">
+            <id>7</id>
+            <description>Second event reusing id 7.</description>
+            <comision type="at-midnight">-3</comision>
+            <GM-options>
+                <GM-option>MAYBE</GM-option>
+            </GM-options>
+            <GM-method>
+                <GM-LMSR>
+                    <b>0</b>
+                </GM-LMSR>
+            </GM-method>
+        </GM-event>
+        <GM-event name="">
+            <id>9</id>
+            <description>Blank event name and two identical options.</description>
+            <comision type="ON-CLOSE">0</comision>
+            <GM-options>
+                <GM-option>YES</GM-option>
+                <GM-option>yes</GM-option>
+            </GM-options>
+            <GM-method>
+                <GM-LMSR>
+                    <b>25</b>
+                </GM-LMSR>
+            </GM-method>
+        </GM-event>
+    </GM-events>
+</Guess-Market>

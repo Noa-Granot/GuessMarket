@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Guess-Market>
+    <GM-events>
+        <GM-event name="Rain in Tel Aviv tomorrow">
+            <id>1</id>
+            <description>Resolves YES if measurable rain falls at the Tel Aviv station before midnight.</description>
+            <comision type="on-purchase">5</comision>
+            <GM-options>
+                <GM-option>YES</GM-option>
+                <GM-option>NO</GM-option>
+            </GM-options>
+            <GM-method>
+                <GM-LMSR>
+                    <b>100</b>
+                </GM-LMSR>
+            </GM-method>
+        </GM-event>
+        <GM-event name="Bitcoin above 100k by year end">
+            <id>2</id>
+            <description>Resolves YES if BTC closes above 100000 USD on 31 December.</description>
+            <comision type="on-close">10</comision>
+            <GM-options>
+                <GM-option>YES</GM-option>
+                <GM-option>NO</GM-option>
+            </GM-options>
+            <GM-method>
+                <GM-LMSR>
+                    <b>50</b>
+                </GM-LMSR>
+            </GM-method>
+        </GM-event>
+    </GM-events>
+</Guess-Market>
