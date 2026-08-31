@@ -1,27 +1,22 @@
 package guessmarket.engine.model;
 
 import java.io.Serializable;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Everything currently loaded in the system: the events, in file order, plus the
- * events manager's account.
- *
- * This whole object is what a file load replaces. The loader builds a fresh
- * MarketSystem, validates it completely, and only then does the engine swap it
- * in -- which is how "a broken file must not overwrite the good one already
- * loaded" is enforced, without any rollback logic.
+ * Everything currently loaded: the events and the users, both in file order.
+ * A file load replaces this whole object, which is how a faulty file cannot
+ * damage a system that is already loaded.
  */
 public class MarketSystem implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private final Map<Integer, Event> eventsById = new LinkedHashMap<>();
-    private final Account managerAccount = new Account();
+    private final Map<String, User> usersByName = new LinkedHashMap<>();
 
     public void addEvent(Event event) {
         if (eventsById.containsKey(event.getId())) {
@@ -30,20 +25,19 @@ public class MarketSystem implements Serializable {
         eventsById.put(event.getId(), event);
     }
 
-    /**
-     * Moves the opening subsidy of every event from the manager to that event's
-     * account. Called once, immediately after a file is loaded successfully.
-     */
-    public void paySubsidies() {
-        for (Event event : eventsById.values()) {
-            double subsidy = event.requiredSubsidy();
-            managerAccount.withdraw(subsidy);
-            event.getAccount().deposit(subsidy);
+    public void addUser(User user) {
+        if (usersByName.containsKey(user.getName())) {
+            throw new IllegalArgumentException("Duplicate user name: " + user.getName());
         }
+        usersByName.put(user.getName(), user);
     }
 
     public List<Event> getEvents() {
         return new ArrayList<>(eventsById.values());
+    }
+
+    public List<User> getUsers() {
+        return new ArrayList<>(usersByName.values());
     }
 
     public Event getEvent(int id) {
@@ -54,11 +48,19 @@ public class MarketSystem implements Serializable {
         return event;
     }
 
-    public boolean isEmpty() {
-        return eventsById.isEmpty();
+    public User getUser(String name) {
+        User user = usersByName.get(name);
+        if (user == null) {
+            throw new IllegalArgumentException("No user named " + name + " is loaded");
+        }
+        return user;
     }
 
-    public Account getManagerAccount() {
-        return managerAccount;
+    public boolean hasEvent(int id) {
+        return eventsById.containsKey(id);
+    }
+
+    public boolean isEmpty() {
+        return eventsById.isEmpty();
     }
 }

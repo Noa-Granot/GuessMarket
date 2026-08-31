@@ -4,10 +4,16 @@ import guessmarket.engine.api.LoadException;
 import guessmarket.engine.model.CommissionType;
 import guessmarket.engine.model.Event;
 import guessmarket.engine.model.MarketSystem;
+import guessmarket.engine.model.OrderBookConfig;
+import guessmarket.engine.model.User;
 import guessmarket.engine.xml.generated.Comision;
+import guessmarket.engine.xml.generated.EventRef;
 import guessmarket.engine.xml.generated.GMEvent;
 import guessmarket.engine.xml.generated.GMLMSR;
+import guessmarket.engine.xml.generated.GMMethod;
 import guessmarket.engine.xml.generated.GMOptions;
+import guessmarket.engine.xml.generated.GMOrderBook;
+import guessmarket.engine.xml.generated.GMUser;
 import guessmarket.engine.xml.generated.GuessMarket;
 
 import jakarta.xml.bind.JAXBContext;
@@ -21,22 +27,11 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Turns an XML file on disk into a MarketSystem, or explains in plain sentences
- * why it could not.
- *
- * Three things about the shape of this class are deliberate:
- *
- * 1. It returns a brand new MarketSystem and never touches the one the engine is
- *    already holding. That is the whole mechanism behind "a broken file must not
- *    overwrite the good file already loaded" -- the engine simply does not
- *    assign the result unless this method returns normally.
- *
- * 2. Validation runs to completion and collects every problem before throwing.
- *    Reporting one mistake at a time would make fixing a bad file tedious.
- *
- * 3. The generated JAXB classes are read here and nowhere else. They are an
- *    accident of the file format, so they stop at this boundary and the rest of
- *    the engine only ever sees Event, EventOption and friends.
+ * Turns an XML file into a MarketSystem, or reports why it could not.
+ * It returns a new MarketSystem and never touches the one the engine already
+ * holds, so a broken file cannot overwrite a good one. Validation collects
+ * every problem before throwing, so a file can be fixed in one pass.
+ * The JAXB classes are read here and nowhere else.
  */
 public class XmlLoader {
 
@@ -44,24 +39,25 @@ public class XmlLoader {
     private static final int MIN_COMMISSION = 0;
     private static final int MAX_COMMISSION = 90;
 
-    /**
-     * @param rawPath full path to the file, as typed by the user
-     * @return a fully built, fully validated system
-     * @throws LoadException if anything at all is wrong
-     */
     public MarketSystem load(String rawPath) {
         File file = resolveFile(rawPath);
         GuessMarket root = unmarshal(file);
-        List<GMEvent> rawEvents = extractEvents(root);
 
-        List<String> problems = validate(rawEvents);
+        List<GMEvent> rawEvents = extractEvents(root);
+        List<GMUser> rawUsers = extractUsers(root);
+
+        List<String> problems = new ArrayList<>();
+        validateEvents(rawEvents, problems);
+        validateUsers(rawUsers, problems);
+        validateMarketMakers(rawEvents, rawUsers, problems);
+
         if (!problems.isEmpty()) {
             throw new LoadException(
                     "The file was read but its contents are not valid, so nothing was loaded.",
                     problems);
         }
 
-        return build(rawEvents);
+        return build(rawEvents, rawUsers);
     }
 
     // ---------- step 1: is there a file at all ----------
@@ -72,7 +68,7 @@ public class XmlLoader {
         }
 
         String path = rawPath.trim();
-        // A path pasted from Windows Explorer often arrives wrapped in quotes.
+        // A path copied from Explorer can arrive wrapped in quotes.
         if (path.length() >= 2 && path.startsWith("\"") && path.endsWith("\"")) {
             path = path.substring(1, path.length() - 1).trim();
         }
@@ -131,33 +127,36 @@ public class XmlLoader {
         return root.getGMEvents().getGMEvent();
     }
 
+    private List<GMUser> extractUsers(GuessMarket root) {
+        if (root.getGMUsers() == null || root.getGMUsers().getGMUser() == null
+                || root.getGMUsers().getGMUser().isEmpty()) {
+            throw new LoadException("The file does not define any users. "
+                    + "A Guess Market file needs at least one GM-user inside GM-users.");
+        }
+        return root.getGMUsers().getGMUser();
+    }
+
     // ---------- step 3: is the content sane ----------
 
-    private List<String> validate(List<GMEvent> rawEvents) {
-        List<String> problems = new ArrayList<>();
+    private void validateEvents(List<GMEvent> rawEvents, List<String> problems) {
         Set<Integer> seenIds = new HashSet<>();
         Set<Integer> reportedDuplicates = new HashSet<>();
 
         for (int i = 0; i < rawEvents.size(); i++) {
             GMEvent raw = rawEvents.get(i);
-            String where = describe(raw, i);
+            String where = describeEvent(raw, i);
 
             if (!seenIds.add(raw.getId()) && reportedDuplicates.add(raw.getId())) {
                 problems.add(where + ": the event number " + raw.getId()
                         + " is used by more than one event. Every event needs its own number.");
             }
 
-            validateName(raw, where, problems);
+            if (isBlank(raw.getName())) {
+                problems.add(where + ": the event has no name. The name attribute cannot be empty.");
+            }
             validateCommission(raw.getComision(), where, problems);
             validateOptions(raw.getGMOptions(), where, problems);
-            validateMethod(raw, where, problems);
-        }
-        return problems;
-    }
-
-    private void validateName(GMEvent raw, String where, List<String> problems) {
-        if (isBlank(raw.getName())) {
-            problems.add(where + ": the event has no name. The name attribute cannot be empty.");
+            validateMethod(raw.getGMMethod(), where, problems);
         }
     }
 
@@ -214,39 +213,145 @@ public class XmlLoader {
         }
     }
 
-    private void validateMethod(GMEvent raw, String where, List<String> problems) {
-        if (raw.getGMMethod() == null || raw.getGMMethod().getGMLMSR() == null) {
-            problems.add(where + ": the trading method is missing. Exercise 1 events must define GM-LMSR.");
+    private void validateMethod(GMMethod method, String where, List<String> problems) {
+        if (method == null) {
+            problems.add(where + ": the trading method is missing. "
+                    + "An event must define either GM-LMSR or GM-order-book.");
             return;
         }
-        GMLMSR lmsr = raw.getGMMethod().getGMLMSR();
-        if (lmsr.getB() <= 0) {
-            problems.add(where + ": the liquidity value b is " + lmsr.getB()
+
+        GMLMSR lmsr = method.getGMLMSR();
+        GMOrderBook orderBook = method.getGMOrderBook();
+
+        if (lmsr == null && orderBook == null) {
+            problems.add(where + ": the trading method is empty. "
+                    + "An event must define either GM-LMSR or GM-order-book.");
+            return;
+        }
+        if (lmsr != null && orderBook != null) {
+            problems.add(where + ": the event defines both GM-LMSR and GM-order-book. "
+                    + "It must have exactly one trading method.");
+            return;
+        }
+
+        if (lmsr != null) {
+            if (lmsr.getB() <= 0) {
+                problems.add(where + ": the liquidity value b is " + lmsr.getB()
+                        + ", but it has to be greater than zero.");
+            }
+            return;
+        }
+
+        if (orderBook.getD() <= 0) {
+            problems.add(where + ": the payout value d is " + orderBook.getD()
                     + ", but it has to be greater than zero.");
+        }
+        if (orderBook.getInital() <= 0) {
+            problems.add(where + ": the initial share count is " + orderBook.getInital()
+                    + ", but it has to be greater than zero.");
+        }
+        String allowMint = orderBook.getAllowMint();
+        if (!"true".equalsIgnoreCase(trimmed(allowMint)) && !"false".equalsIgnoreCase(trimmed(allowMint))) {
+            problems.add(where + ": allow-mint is \"" + allowMint
+                    + "\", but it has to be either true or false.");
         }
     }
 
-    /** Identifies an event in a message even when its id or name is missing. */
-    private String describe(GMEvent raw, int index) {
-        String label = "Event number " + (index + 1) + " in the file (id " + raw.getId() + ")";
+    private void validateUsers(List<GMUser> rawUsers, List<String> problems) {
+        Set<String> seenNames = new HashSet<>();
+        Set<String> reportedDuplicates = new HashSet<>();
+
+        for (int i = 0; i < rawUsers.size(); i++) {
+            GMUser raw = rawUsers.get(i);
+            String where = describeUser(raw, i);
+
+            if (isBlank(raw.getName())) {
+                problems.add(where + ": the user has no name. The name attribute cannot be empty.");
+            } else {
+                String key = raw.getName().trim().toLowerCase();
+                if (!seenNames.add(key) && reportedDuplicates.add(key)) {
+                    problems.add(where + ": the name \"" + raw.getName().trim()
+                            + "\" is used by more than one user. Every user needs a unique name.");
+                }
+            }
+
+            if (raw.getInitialCash() <= 0) {
+                problems.add(where + ": the starting balance is " + raw.getInitialCash()
+                        + ", but every user has to start with more than zero.");
+            }
+        }
+    }
+
+    /**
+     * Two rules that need the events and the users together: a market maker
+     * cannot point at an event that does not exist, and every event needs
+     * exactly one market maker.
+     */
+    private void validateMarketMakers(List<GMEvent> rawEvents, List<GMUser> rawUsers,
+                                      List<String> problems) {
+        Set<Integer> eventIds = new HashSet<>();
+        for (GMEvent raw : rawEvents) {
+            eventIds.add(raw.getId());
+        }
+
+        java.util.Map<Integer, List<String>> makersByEvent = new java.util.LinkedHashMap<>();
+
+        for (int i = 0; i < rawUsers.size(); i++) {
+            GMUser raw = rawUsers.get(i);
+            if (raw.getGMMareketMaker() == null) {
+                continue;
+            }
+            String who = isBlank(raw.getName()) ? describeUser(raw, i) : raw.getName().trim();
+
+            for (EventRef ref : raw.getGMMareketMaker().getEvent()) {
+                if (!eventIds.contains(ref.getId())) {
+                    problems.add("The user \"" + who + "\" is set as market maker of event number "
+                            + ref.getId() + ", but no such event exists in the file.");
+                    continue;
+                }
+                makersByEvent.computeIfAbsent(ref.getId(), k -> new ArrayList<>()).add(who);
+            }
+        }
+
+        for (GMEvent raw : rawEvents) {
+            List<String> makers = makersByEvent.getOrDefault(raw.getId(), List.of());
+            if (makers.isEmpty()) {
+                problems.add("Event number " + raw.getId() + " has no market maker. "
+                        + "Exactly one user must be set as its market maker.");
+            } else if (makers.size() > 1) {
+                problems.add("Event number " + raw.getId() + " has more than one market maker ("
+                        + String.join(", ", makers) + "). Exactly one user must be set as its market maker.");
+            }
+        }
+    }
+
+    private String describeEvent(GMEvent raw, int index) {
         if (!isBlank(raw.getName())) {
-            label = "Event number " + (index + 1) + " in the file, \"" + raw.getName().trim()
+            return "Event number " + (index + 1) + " in the file, \"" + raw.getName().trim()
                     + "\" (id " + raw.getId() + ")";
         }
-        return label;
+        return "Event number " + (index + 1) + " in the file (id " + raw.getId() + ")";
+    }
+
+    private String describeUser(GMUser raw, int index) {
+        if (!isBlank(raw.getName())) {
+            return "User number " + (index + 1) + " in the file, \"" + raw.getName().trim() + "\"";
+        }
+        return "User number " + (index + 1) + " in the file";
     }
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
 
+    private String trimmed(String value) {
+        return value == null ? "" : value.trim();
+    }
+
     // ---------- step 4: build the real thing ----------
 
-    /**
-     * Only ever called once validation has passed, so the guards inside Event
-     * and MarketSystem are a safety net here rather than the error path.
-     */
-    private MarketSystem build(List<GMEvent> rawEvents) {
+    /** Called only after validation passed. */
+    private MarketSystem build(List<GMEvent> rawEvents, List<GMUser> rawUsers) {
         MarketSystem system = new MarketSystem();
 
         for (GMEvent raw : rawEvents) {
@@ -255,17 +360,36 @@ public class XmlLoader {
                 optionNames.add(name.trim());
             }
 
-            system.addEvent(new Event(
-                    raw.getId(),
-                    raw.getName().trim(),
-                    raw.getDescription() == null ? "" : raw.getDescription().trim(),
-                    raw.getComision().getValue(),
-                    CommissionType.fromXml(raw.getComision().getType()),
-                    optionNames,
-                    raw.getGMMethod().getGMLMSR().getB()));
+            String name = raw.getName().trim();
+            String description = raw.getDescription() == null ? "" : raw.getDescription().trim();
+            int percent = raw.getComision().getValue();
+            CommissionType commissionType = CommissionType.fromXml(raw.getComision().getType());
+
+            Event event;
+            if (raw.getGMMethod().getGMLMSR() != null) {
+                event = Event.lmsr(raw.getId(), name, description, percent, commissionType,
+                        optionNames, raw.getGMMethod().getGMLMSR().getB());
+            } else {
+                GMOrderBook ob = raw.getGMMethod().getGMOrderBook();
+                event = Event.orderBook(raw.getId(), name, description, percent, commissionType,
+                        optionNames,
+                        new OrderBookConfig(ob.getInital(), ob.getD(),
+                                Boolean.parseBoolean(trimmed(ob.getAllowMint()))));
+            }
+            system.addEvent(event);
         }
 
-        system.paySubsidies();
+        for (GMUser raw : rawUsers) {
+            User user = new User(raw.getName().trim(), raw.getInitialCash());
+            if (raw.getGMMareketMaker() != null) {
+                for (EventRef ref : raw.getGMMareketMaker().getEvent()) {
+                    user.addMarketMakerEvent(ref.getId());
+                    system.getEvent(ref.getId()).setMarketMakerName(user.getName());
+                }
+            }
+            system.addUser(user);
+        }
+
         return system;
     }
 }

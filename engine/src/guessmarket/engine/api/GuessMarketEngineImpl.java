@@ -4,6 +4,7 @@ import guessmarket.engine.model.CloseOutcome;
 import guessmarket.engine.model.Event;
 import guessmarket.engine.model.EventOption;
 import guessmarket.engine.model.MarketSystem;
+import guessmarket.engine.model.User;
 import guessmarket.engine.model.Transaction;
 import guessmarket.engine.persistence.SystemStateStore;
 import guessmarket.engine.xml.XmlLoader;
@@ -48,6 +49,20 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
         List<EventDto> result = new ArrayList<>();
         for (Event event : loaded.getEvents()) {
             result.add(toDto(event));
+        }
+        return result;
+    }
+
+    @Override
+    public List<UserDto> listUsers() {
+        MarketSystem loaded = requireLoaded();
+        List<UserDto> result = new ArrayList<>();
+        for (User user : loaded.getUsers()) {
+            result.add(new UserDto(
+                    user.getName(),
+                    user.getAccount().getBalance(),
+                    user.isMarketMaker(),
+                    new ArrayList<>(user.getMarketMakerFor())));
         }
         return result;
     }
@@ -115,11 +130,6 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
     }
 
     @Override
-    public double managerBalance() {
-        return requireLoaded().getManagerAccount().getBalance();
-    }
-
-    @Override
     public void saveState(String pathWithoutExtension) {
         stateStore.save(pathWithoutExtension, requireLoaded());
     }
@@ -164,7 +174,10 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
                 event.getCommissionPercent(),
                 event.getCommissionType().getDisplay(),
                 optionNames,
-                event.getStatus().getDisplay());
+                event.getStatus().getDisplay(),
+                event.getType().getDisplay(),
+                event.getMarketMakerName(),
+                event.getAccount().getBalance());
     }
 
     private EventStateDto toStateDto(Event event) {

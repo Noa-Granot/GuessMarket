@@ -8,9 +8,8 @@ import jakarta.xml.bind.annotation.XmlType;
 import jakarta.xml.bind.annotation.XmlValue;
 
 /**
- * GENERATED-STYLE BINDING CLASS -- see GuessMarket.
- *
- * Note the spelling: the schema element really is "comision", not "commission".
+ * JAXB binding class for the exercise 2 schema.
+ * The element is spelled comision in the schema, not commission.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {"value"})
@@ -23,11 +22,6 @@ public class Comision {
     @XmlAttribute(name = "type", required = true)
     protected String type;
 
-    public int getValue() {
-        return value;
-    }
-
-    public String getType() {
-        return type;
-    }
+    public int getValue() { return value; }
+    public String getType() { return type; }
 }

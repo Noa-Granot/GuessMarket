@@ -30,6 +30,8 @@ public interface GuessMarketEngine {
 
     List<EventDto> listEvents();
 
+    List<UserDto> listUsers();
+
     /** Only events that can still be traded. */
     List<EventDto> listActiveEvents();
 
@@ -42,7 +44,6 @@ public interface GuessMarketEngine {
 
     CloseReceipt close(int eventId, int winningOptionIndex);
 
-    double managerBalance();
 
     /**
      * BONUS: writes the whole system, trade history included, to a file.

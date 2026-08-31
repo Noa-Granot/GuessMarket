@@ -1,11 +1,8 @@
 package guessmarket.engine.model;
 
-/**
- * Lifecycle of an event. Exercise 1 only has two states: an event is ACTIVE
- * from the moment it is loaded, and becomes CLOSED once it is decided.
- * Exercise 2 adds a NOT_STARTED state before ACTIVE.
- */
+/** Whether an event can be traded. Events start not started until their MM opens them. */
 public enum EventStatus {
+    NOT_STARTED("Not started"),
     ACTIVE("Active"),
     CLOSED("Closed");
 

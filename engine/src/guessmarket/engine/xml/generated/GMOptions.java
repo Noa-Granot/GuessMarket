@@ -9,7 +9,7 @@ import jakarta.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.List;
 
-/** GENERATED-STYLE BINDING CLASS -- see GuessMarket. */
+/** JAXB binding class for the exercise 2 schema. */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {"gmOption"})
 @XmlRootElement(name = "GM-options")

@@ -7,7 +7,7 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
-/** GENERATED-STYLE BINDING CLASS -- see GuessMarket. */
+/** JAXB binding class for the exercise 2 schema. */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {"id", "description", "comision", "gmOptions", "gmMethod"})
 @XmlRootElement(name = "GM-event")
@@ -30,27 +30,10 @@ public class GMEvent {
     @XmlAttribute(name = "name", required = true)
     protected String name;
 
-    public int getId() {
-        return id;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public Comision getComision() {
-        return comision;
-    }
-
-    public GMOptions getGMOptions() {
-        return gmOptions;
-    }
-
-    public GMMethod getGMMethod() {
-        return gmMethod;
-    }
-
-    public String getName() {
-        return name;
-    }
+    public int getId() { return id; }
+    public String getDescription() { return description; }
+    public Comision getComision() { return comision; }
+    public GMOptions getGMOptions() { return gmOptions; }
+    public GMMethod getGMMethod() { return gmMethod; }
+    public String getName() { return name; }
 }
