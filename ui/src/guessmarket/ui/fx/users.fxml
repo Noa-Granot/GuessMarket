@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<SplitPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="guessmarket.ui.fx.UsersController"
+           dividerPositions="0.26">
+    <items>
+
+        <!-- Left of the sketch: the users table -->
+        <TableView fx:id="usersTable">
+            <columns>
+                <TableColumn fx:id="userNameColumn" text="User" prefWidth="130.0"/>
+                <TableColumn fx:id="userBalanceColumn" text="Balance" prefWidth="90.0"/>
+                <TableColumn fx:id="userRoleColumn" text="Role" prefWidth="90.0"/>
+            </columns>
+        </TableView>
+
+        <!-- Right of the sketch: a single user's details -->
+        <ScrollPane fitToWidth="true" styleClass="detail-scroll">
+            <content>
+                <VBox spacing="10.0" styleClass="detail-pane">
+                    <children>
+
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                            <children>
+                                <Label fx:id="userTitle" styleClass="detail-title"
+                                       text="Select a user to see their details"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label fx:id="userBalanceLabel" styleClass="balance-badge"/>
+                            </children>
+                        </HBox>
+
+                        <Label text="Events participation / owner" styleClass="section-title"/>
+                        <VBox fx:id="participationBox" spacing="3.0"/>
+
+                        <Label text="Single event details and trade" styleClass="section-title"/>
+                        <VBox fx:id="userEventDetailBox" spacing="3.0"/>
+
+                    </children>
+                </VBox>
+            </content>
+        </ScrollPane>
+
+    </items>
+</SplitPane>

@@ -1,0 +1,11 @@
+SPELLINGS FROM THE OFFICIAL SCHEMA, KEPT AS THEY ARE
+    comision             one m
+    GM-mareket-maker     mareket
+    inital               inital
+
+NOT BUILT YET (weeks 2 and 3)
+    opening an event, which moves the subsidy or the initial stock from
+    the market maker's account
+    trading, both LMSR and order book
+    closing an event
+    the order book itself, matching, minting and the statistics

@@ -31,3 +31,8 @@ bin/
 
 .idea/
 *.iml
+
+### External Libraries / Dependencies ###
+lib/
+lib-fx/
+*.jar

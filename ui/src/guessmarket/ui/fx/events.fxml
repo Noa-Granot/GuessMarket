@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import java.lang.String?>
+
+<SplitPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="guessmarket.ui.fx.EventsController"
+           dividerPositions="0.5">
+    <items>
+
+        <!-- Left half of the sketch: the filter line above the list of events -->
+        <BorderPane>
+            <top>
+                <FlowPane hgap="16.0" vgap="6.0" styleClass="filter-bar">
+                    <children>
+
+                        <HBox spacing="4.0" alignment="CENTER_LEFT">
+                            <children>
+                                <Label text="Method:" styleClass="filter-label"/>
+                                <fx:define>
+                                    <ToggleGroup fx:id="typeFilter"/>
+                                </fx:define>
+                                <ToggleButton text="All" toggleGroup="$typeFilter" selected="true">
+                                    <userData><String fx:value="All"/></userData>
+                                </ToggleButton>
+                                <ToggleButton text="LMSR" toggleGroup="$typeFilter">
+                                    <userData><String fx:value="LMSR"/></userData>
+                                </ToggleButton>
+                                <ToggleButton text="Order Book" toggleGroup="$typeFilter">
+                                    <userData><String fx:value="Order Book"/></userData>
+                                </ToggleButton>
+                            </children>
+                        </HBox>
+
+                        <HBox spacing="4.0" alignment="CENTER_LEFT">
+                            <children>
+                                <Label text="Status:" styleClass="filter-label"/>
+                                <fx:define>
+                                    <ToggleGroup fx:id="statusFilter"/>
+                                </fx:define>
+                                <ToggleButton text="All" toggleGroup="$statusFilter" selected="true">
+                                    <userData><String fx:value="All"/></userData>
+                                </ToggleButton>
+                                <ToggleButton text="Not started" toggleGroup="$statusFilter">
+                                    <userData><String fx:value="Not started"/></userData>
+                                </ToggleButton>
+                                <ToggleButton text="Active" toggleGroup="$statusFilter">
+                                    <userData><String fx:value="Active"/></userData>
+                                </ToggleButton>
+                                <ToggleButton text="Closed" toggleGroup="$statusFilter">
+                                    <userData><String fx:value="Closed"/></userData>
+                                </ToggleButton>
+                            </children>
+                        </HBox>
+
+                        <HBox spacing="4.0" alignment="CENTER_LEFT">
+                            <children>
+                                <Label text="Comision:" styleClass="filter-label"/>
+                                <fx:define>
+                                    <ToggleGroup fx:id="commissionFilter"/>
+                                </fx:define>
+                                <ToggleButton text="All" toggleGroup="$commissionFilter" selected="true">
+                                    <userData><String fx:value="All"/></userData>
+                                </ToggleButton>
+                                <ToggleButton text="On purchase" toggleGroup="$commissionFilter">
+                                    <userData><String fx:value="on every purchase"/></userData>
+                                </ToggleButton>
+                                <ToggleButton text="On close" toggleGroup="$commissionFilter">
+                                    <userData><String fx:value="when the event closes"/></userData>
+                                </ToggleButton>
+                            </children>
+                        </HBox>
+
+                    </children>
+                </FlowPane>
+            </top>
+
+            <center>
+                <TableView fx:id="eventsTable">
+                    <columns>
+                        <TableColumn fx:id="nameColumn" text="Event" prefWidth="180.0"/>
+                        <TableColumn fx:id="statusColumn" text="Status" prefWidth="90.0"/>
+                        <TableColumn fx:id="typeColumn" text="Method" prefWidth="90.0"/>
+                        <TableColumn fx:id="commissionColumn" text="Comision" prefWidth="160.0"/>
+                        <TableColumn fx:id="makerColumn" text="Market maker" prefWidth="110.0"/>
+                        <TableColumn fx:id="balanceColumn" text="Account" prefWidth="90.0"/>
+                    </columns>
+                </TableView>
+            </center>
+        </BorderPane>
+
+        <!-- Right half of the sketch: event details and trade -->
+        <ScrollPane fitToWidth="true" styleClass="detail-scroll">
+            <content>
+                <VBox spacing="8.0" styleClass="detail-pane">
+                    <children>
+
+                        <Label fx:id="detailTitle" styleClass="detail-title" wrapText="true"
+                               text="Select an event to see its details"/>
+                        <Label fx:id="detailSubtitle" wrapText="true" styleClass="detail-subtitle"/>
+
+                        <!-- shown for LMSR events -->
+                        <VBox fx:id="lmsrBox" spacing="4.0" managed="false" visible="false"/>
+
+                        <!-- shown for order book events: the two books side by side -->
+                        <VBox fx:id="orderBookBox" spacing="8.0" managed="false" visible="false">
+                            <children>
+                                <HBox spacing="10.0">
+                                    <children>
+                                        <VBox fx:id="bookOneBox" spacing="3.0" styleClass="book-pane"
+                                              HBox.hgrow="ALWAYS"/>
+                                        <VBox fx:id="bookTwoBox" spacing="3.0" styleClass="book-pane"
+                                              HBox.hgrow="ALWAYS"/>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+
+                        <VBox fx:id="participationBox" spacing="3.0" styleClass="participation-pane"
+                              managed="false" visible="false"/>
+
+                    </children>
+                </VBox>
+            </content>
+        </ScrollPane>
+
+    </items>
+</SplitPane>

@@ -12,21 +12,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.StreamCorruptedException;
 
-/**
- * BONUS: saves and restores the whole system, trade history included, so a
- * session can be picked up later.
- *
- * Java serialisation is used rather than a text format, because every class in
- * the model is already a plain object graph hanging off MarketSystem -- writing
- * it takes one call, and nothing has to be kept in step with a hand-written
- * format as the model grows in the next exercises.
- *
- * The exercise asks the user for a path WITHOUT an extension, so this class owns
- * the extension and appends it on the way in and out. The user never types it.
- */
 public class SystemStateStore {
 
-    /** Chosen here and nowhere else, so it can be changed in one line. */
     private static final String EXTENSION = ".gm";
 
     public void save(String pathWithoutExtension, MarketSystem system) {
@@ -77,7 +64,6 @@ public class SystemStateStore {
         }
     }
 
-    /** Appends the extension, and tolerates a user who typed it anyway. */
     private File resolve(String pathWithoutExtension) {
         if (pathWithoutExtension == null || pathWithoutExtension.isBlank()) {
             throw new EngineException("No path was entered.");
