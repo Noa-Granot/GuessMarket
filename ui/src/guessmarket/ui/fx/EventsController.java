@@ -214,7 +214,7 @@ public class EventsController {
         lmsrBox.getChildren().add(sectionTitle("Account"));
         lmsrBox.getChildren().add(new Label(String.format("Balance: %.2f", state.accountBalance())));
         lmsrBox.getChildren().add(new Label(
-                String.format("Comision collected: %.2f", state.commissionCollected())));
+                String.format("Commission collected: %.2f", state.commissionCollected())));
 
         lmsrBox.getChildren().add(sectionTitle("Trade history"));
         if (state.historyNewestFirst().isEmpty()) {
@@ -222,7 +222,7 @@ public class EventsController {
         } else {
             for (TransactionDto t : state.historyNewestFirst()) {
                 lmsrBox.getChildren().add(new Label(String.format(
-                        "#%d   %s   x%d   paid %.2f   comision %.2f",
+                        "#%d   %s   x%d   paid %.2f   commission %.2f",
                         t.serial(), t.optionName(), t.quantity(), t.shareCost(), t.commission())));
             }
         }

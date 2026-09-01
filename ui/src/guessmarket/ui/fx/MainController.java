@@ -3,7 +3,7 @@ package guessmarket.ui.fx;
 import guessmarket.engine.api.GuessMarketEngine;
 import guessmarket.engine.api.LoadException;
 
-import javafx.fxml  .FXML;
+import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -59,10 +59,6 @@ public class MainController {
         this.stage = stage;
     }
 
-    /**
-     * The exercise requires a file chooser dialog, so there is deliberately no
-     * text field for typing a path.
-     */
     @FXML
     private void onLoadFile() {
         FileChooser chooser = new FileChooser();

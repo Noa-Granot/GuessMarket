@@ -1,3 +1,38 @@
+What changed in the engine
+==========================
+
+Nothing about the LMSR maths changed. The additions are the exercise 2
+schema and the concepts that come with it.
+
+NEW
+    EventType            LMSR or Order Book
+    OrderBookConfig      inital, d, allow-mint from the file
+    User                 name, account, which events they run
+    UserDto              for the users screen
+
+CHANGED
+    EventStatus          now Not started -> Active -> Closed
+    Event                created through Event.lmsr(...) or Event.orderBook(...)
+                         holds its type, its market maker, and either an
+                         LmsrMarket or an OrderBookConfig
+    MarketSystem         holds users; the single manager account is gone,
+                         because every user now has their own
+    EventDto             gained typeDisplay, marketMakerName, accountBalance
+    XmlLoader            reads the official GM-EX2-Schema.xsd shape
+    generated            12 binding classes instead of 7
+
+REMOVED
+    managerBalance()     there is no single manager any more
+
+NEW VALIDATION RULES
+    every user name is unique
+    every user starts with more than zero
+    a market maker cannot point at an event that does not exist
+    every event has exactly one market maker
+    an event has exactly one trading method
+    for order book events, d and inital are above zero and allow-mint
+    is true or false
+
 SPELLINGS FROM THE OFFICIAL SCHEMA, KEPT AS THEY ARE
     comision             one m
     GM-mareket-maker     mareket

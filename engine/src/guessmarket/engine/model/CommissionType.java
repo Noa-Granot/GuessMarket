@@ -2,7 +2,7 @@ package guessmarket.engine.model;
 
 /**
  * When the event's commission is charged. Maps onto the "type" attribute of the
- * comision element in the XML file.
+ * commission element in the XML file.
  */
 public enum CommissionType {
     ON_PURCHASE("on-purchase", "Charged on every purchase"),

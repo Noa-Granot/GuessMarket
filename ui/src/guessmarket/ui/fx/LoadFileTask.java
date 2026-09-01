@@ -4,12 +4,7 @@ import guessmarket.engine.api.GuessMarketEngine;
 
 import javafx.concurrent.Task;
 
-/**
- * Loads a file on a background thread so the window stays responsive.
- *
- * The real work is fast, so short pauses are inserted between the steps to make
- * the progress bar visible, as the exercise asks.
- */
+
 public class LoadFileTask extends Task<Integer> {
 
     private static final long STEP_PAUSE_MILLIS = 400;

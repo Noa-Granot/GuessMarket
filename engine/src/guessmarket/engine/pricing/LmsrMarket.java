@@ -2,6 +2,19 @@ package guessmarket.engine.pricing;
 
 import java.io.Serializable;
 
+/**
+ * The Logarithmic Market Scoring Rule, and the only place in the system where
+ * the LMSR formulae live.
+ *
+ * An instance holds the liquidity parameter b but holds no share quantities:
+ * quantities are passed in on every call. That keeps it trivially unit-testable
+ * against the simulation file, and in exercise 2 it can sit behind a
+ * TradingMethod interface next to OrderBook without being rewritten.
+ *
+ * Both formulae are evaluated with the log-sum-exp trick (subtracting the
+ * maximum exponent before calling Math.exp). Without it, a large q/b ratio
+ * overflows to Infinity and every price silently becomes NaN.
+ */
 public class LmsrMarket implements Serializable {
 
     private static final long serialVersionUID = 1L;

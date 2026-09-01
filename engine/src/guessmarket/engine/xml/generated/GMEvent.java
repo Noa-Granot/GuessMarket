@@ -9,7 +9,7 @@ import jakarta.xml.bind.annotation.XmlType;
 
 /** JAXB binding class for the exercise 2 schema. */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "", propOrder = {"id", "description", "comision", "gmOptions", "gmMethod"})
+@XmlType(name = "", propOrder = {"id", "description", "commission", "gmOptions", "gmMethod"})
 @XmlRootElement(name = "GM-event")
 public class GMEvent {
 
@@ -19,7 +19,7 @@ public class GMEvent {
     protected String description;
 
     @XmlElement(required = true)
-    protected Comision comision;
+    protected Commission commission;
 
     @XmlElement(name = "GM-options", required = true)
     protected GMOptions gmOptions;
@@ -32,7 +32,7 @@ public class GMEvent {
 
     public int getId() { return id; }
     public String getDescription() { return description; }
-    public Comision getComision() { return comision; }
+    public Commission getCommission() { return commission; }
     public GMOptions getGMOptions() { return gmOptions; }
     public GMMethod getGMMethod() { return gmMethod; }
     public String getName() { return name; }

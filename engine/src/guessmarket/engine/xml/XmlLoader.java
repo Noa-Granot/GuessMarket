@@ -6,7 +6,7 @@ import guessmarket.engine.model.Event;
 import guessmarket.engine.model.MarketSystem;
 import guessmarket.engine.model.OrderBookConfig;
 import guessmarket.engine.model.User;
-import guessmarket.engine.xml.generated.Comision;
+import guessmarket.engine.xml.generated.Commission;
 import guessmarket.engine.xml.generated.EventRef;
 import guessmarket.engine.xml.generated.GMEvent;
 import guessmarket.engine.xml.generated.GMLMSR;
@@ -154,25 +154,25 @@ public class XmlLoader {
             if (isBlank(raw.getName())) {
                 problems.add(where + ": the event has no name. The name attribute cannot be empty.");
             }
-            validateCommission(raw.getComision(), where, problems);
+            validateCommission(raw.getCommission(), where, problems);
             validateOptions(raw.getGMOptions(), where, problems);
             validateMethod(raw.getGMMethod(), where, problems);
         }
     }
 
-    private void validateCommission(Comision comision, String where, List<String> problems) {
-        if (comision == null) {
-            problems.add(where + ": the comision element is missing.");
+    private void validateCommission(Commission commission, String where, List<String> problems) {
+        if (commission == null) {
+            problems.add(where + ": the commission element is missing.");
             return;
         }
 
-        int percent = comision.getValue();
+        int percent = commission.getValue();
         if (percent < MIN_COMMISSION || percent > MAX_COMMISSION) {
             problems.add(where + ": the commission is " + percent
                     + ", but it has to be between " + MIN_COMMISSION + " and " + MAX_COMMISSION + ".");
         }
 
-        String type = comision.getType();
+        String type = commission.getType();
         if (isBlank(type)) {
             problems.add(where + ": the commission has no type. It must be either on-purchase or on-close.");
             return;
@@ -246,8 +246,8 @@ public class XmlLoader {
             problems.add(where + ": the payout value d is " + orderBook.getD()
                     + ", but it has to be greater than zero.");
         }
-        if (orderBook.getInital() <= 0) {
-            problems.add(where + ": the initial share count is " + orderBook.getInital()
+        if (orderBook.getInitial() <= 0) {
+            problems.add(where + ": the initial share count is " + orderBook.getInitial()
                     + ", but it has to be greater than zero.");
         }
         String allowMint = orderBook.getAllowMint();
@@ -298,12 +298,12 @@ public class XmlLoader {
 
         for (int i = 0; i < rawUsers.size(); i++) {
             GMUser raw = rawUsers.get(i);
-            if (raw.getGMMareketMaker() == null) {
+            if (raw.getGMMarketMaker() == null) {
                 continue;
             }
             String who = isBlank(raw.getName()) ? describeUser(raw, i) : raw.getName().trim();
 
-            for (EventRef ref : raw.getGMMareketMaker().getEvent()) {
+            for (EventRef ref : raw.getGMMarketMaker().getEvent()) {
                 if (!eventIds.contains(ref.getId())) {
                     problems.add("The user \"" + who + "\" is set as market maker of event number "
                             + ref.getId() + ", but no such event exists in the file.");
@@ -362,8 +362,8 @@ public class XmlLoader {
 
             String name = raw.getName().trim();
             String description = raw.getDescription() == null ? "" : raw.getDescription().trim();
-            int percent = raw.getComision().getValue();
-            CommissionType commissionType = CommissionType.fromXml(raw.getComision().getType());
+            int percent = raw.getCommission().getValue();
+            CommissionType commissionType = CommissionType.fromXml(raw.getCommission().getType());
 
             Event event;
             if (raw.getGMMethod().getGMLMSR() != null) {
@@ -373,7 +373,7 @@ public class XmlLoader {
                 GMOrderBook ob = raw.getGMMethod().getGMOrderBook();
                 event = Event.orderBook(raw.getId(), name, description, percent, commissionType,
                         optionNames,
-                        new OrderBookConfig(ob.getInital(), ob.getD(),
+                        new OrderBookConfig(ob.getInitial(), ob.getD(),
                                 Boolean.parseBoolean(trimmed(ob.getAllowMint()))));
             }
             system.addEvent(event);
@@ -381,8 +381,8 @@ public class XmlLoader {
 
         for (GMUser raw : rawUsers) {
             User user = new User(raw.getName().trim(), raw.getInitialCash());
-            if (raw.getGMMareketMaker() != null) {
-                for (EventRef ref : raw.getGMMareketMaker().getEvent()) {
+            if (raw.getGMMarketMaker() != null) {
+                for (EventRef ref : raw.getGMMarketMaker().getEvent()) {
                     user.addMarketMakerEvent(ref.getId());
                     system.getEvent(ref.getId()).setMarketMakerName(user.getName());
                 }

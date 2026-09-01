@@ -10,7 +10,7 @@
 		</xs:complexType>
 	</xs:element>
 	<xs:element name="description" type="xs:string"/>
-	<xs:element name="comision">
+	<xs:element name="commission">
 		<xs:complexType>
 			<xs:simpleContent>
 				<xs:extension base="xs:int">
@@ -46,14 +46,14 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element ref="initial-cash"/>
-				<xs:element ref="GM-mareket-maker" minOccurs="0"/>
+				<xs:element ref="GM-market-maker" minOccurs="0"/>
 			</xs:sequence>
 			<xs:attribute name="name" type="xs:string" use="required"/>
 		</xs:complexType>
 	</xs:element>
 	<xs:element name="GM-order-book">
 		<xs:complexType>
-			<xs:attribute name="inital" type="xs:int" use="required"/>
+			<xs:attribute name="initial" type="xs:int" use="required"/>
 			<xs:attribute name="d" type="xs:int" use="required"/>
 			<xs:attribute name="allow-mint" use="required">
 				<xs:simpleType>
@@ -81,7 +81,7 @@
 			</xs:choice>
 		</xs:complexType>
 	</xs:element>
-	<xs:element name="GM-mareket-maker">
+	<xs:element name="GM-market-maker">
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element ref="event" maxOccurs="unbounded"/>
@@ -100,7 +100,7 @@
 			<xs:sequence>
 				<xs:element ref="id"/>
 				<xs:element ref="description"/>
-				<xs:element ref="comision"/>
+				<xs:element ref="commission"/>
 				<xs:element ref="GM-options"/>
 				<xs:element ref="GM-method"/>
 			</xs:sequence>

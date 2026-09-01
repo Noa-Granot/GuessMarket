@@ -12,13 +12,6 @@ import guessmarket.engine.xml.XmlLoader;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * The engine. Holds at most one loaded MarketSystem at a time, translates
- * domain objects into DTOs on the way out, and translates domain exceptions
- * into EngineException on the way out.
- *
- * Nothing here prints. Nothing here returns a mutable domain object.
- */
 public class GuessMarketEngineImpl implements GuessMarketEngine {
 
     private final XmlLoader loader = new XmlLoader();
@@ -31,11 +24,6 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
         return system != null;
     }
 
-    /**
-     * The assignment on the last line is the whole reason a bad file cannot
-     * damage a good one: if the loader throws, we never reach it and the
-     * previously loaded system is still in place, untouched.
-     */
     @Override
     public int loadFile(String path) {
         MarketSystem candidate = loader.load(path);

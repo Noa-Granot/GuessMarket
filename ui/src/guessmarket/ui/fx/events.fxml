@@ -66,7 +66,7 @@
 
                         <HBox spacing="4.0" alignment="CENTER_LEFT">
                             <children>
-                                <Label text="Comision:" styleClass="filter-label"/>
+                                <Label text="Commission:" styleClass="filter-label"/>
                                 <fx:define>
                                     <ToggleGroup fx:id="commissionFilter"/>
                                 </fx:define>
@@ -92,7 +92,7 @@
                         <TableColumn fx:id="nameColumn" text="Event" prefWidth="180.0"/>
                         <TableColumn fx:id="statusColumn" text="Status" prefWidth="90.0"/>
                         <TableColumn fx:id="typeColumn" text="Method" prefWidth="90.0"/>
-                        <TableColumn fx:id="commissionColumn" text="Comision" prefWidth="160.0"/>
+                        <TableColumn fx:id="commissionColumn" text="Commission" prefWidth="160.0"/>
                         <TableColumn fx:id="makerColumn" text="Market maker" prefWidth="110.0"/>
                         <TableColumn fx:id="balanceColumn" text="Account" prefWidth="90.0"/>
                     </columns>
