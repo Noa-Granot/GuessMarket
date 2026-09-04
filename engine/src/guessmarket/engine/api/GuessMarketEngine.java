@@ -3,27 +3,23 @@ package guessmarket.engine.api;
 import java.util.List;
 
 /**
- * Everything the outside world can ask the engine to do. The console UI in
- * exercise 1, the JavaFX controllers in exercise 2 and the servlets in exercise
- * 3 all talk to this interface and nothing else.
+ * Everything the user interface can ask the engine to do, and the only part of
+ * the engine it may know about. The engine is passive: it answers requests,
+ * does not know who is calling, and never prints.
  *
- * The engine is passive: it answers questions and performs commands, and it has
- * no idea who is calling. It never prints anything.
- *
- * Option numbers here are 0-based. The 1-based numbering the exercise requires
- * on screen is the caller's responsibility.
+ * Option numbers here start at 0; the caller converts to the numbers shown on
+ * screen, which start at 1. Users are identified by name.
  */
 public interface GuessMarketEngine {
 
-    /** True once a valid file (or the demo data) has been loaded. */
+    /** True once a valid file has been loaded. */
     boolean isLoaded();
 
     /**
-     * Reads the file at the given path and replaces whatever is currently
-     * loaded. If anything is wrong the current system is left untouched and a
-     * LoadException is thrown carrying every problem found.
+     * Reads the file at the given path and replaces whatever is loaded. If the
+     * file is not valid the current system is left alone and a LoadException is
+     * thrown carrying every problem found.
      *
-     * @param path full path to an .xml file, as typed by the user
      * @return how many events were loaded
      */
     int loadFile(String path);
@@ -32,30 +28,35 @@ public interface GuessMarketEngine {
 
     List<UserDto> listUsers();
 
-    /** Only events that can still be traded. */
-    List<EventDto> listActiveEvents();
-
     EventStateDto eventState(int eventId);
 
-    /** What a purchase would cost, without performing it. */
-    double quote(int eventId, int optionIndex, long quantity);
+    UserStateDto userState(String userName);
 
-    PurchaseReceipt buy(int eventId, int optionIndex, long quantity);
-
-    CloseReceipt close(int eventId, int winningOptionIndex);
-
+    /** What buying those shares would cost, in shares and in commission. */
+    QuoteDto quote(int eventId, int optionIndex, long quantity);
 
     /**
-     * BONUS: writes the whole system, trade history included, to a file.
+     * Opens an event for trading. Only its market maker may do this, and only
+     * if he can afford the opening cost.
+     */
+    OpenReceipt openEvent(int eventId, String userName);
+
+    /** Buys shares of an LMSR event on behalf of a user. */
+    PurchaseReceipt buy(int eventId, String userName, int optionIndex, long quantity);
+
+    /** Closes an event and decides it. Only its market maker may do this. */
+    CloseReceipt closeEvent(int eventId, String userName, int winningOptionIndex);
+
+    /**
+     * Bonus. Writes the whole system, trade history included, to a file.
      *
-     * @param pathWithoutExtension full path and file name, with no extension;
-     *                             the engine supplies its own
+     * @param pathWithoutExtension path and file name with no extension; the
+     *                             engine adds its own
      */
     void saveState(String pathWithoutExtension);
 
     /**
-     * BONUS: restores a system previously written by saveState, replacing
-     * whatever is loaded. Unlike loadFile this does not read the exercise XML.
+     * Bonus. Restores a system written earlier by saveState.
      *
      * @return how many events were restored
      */

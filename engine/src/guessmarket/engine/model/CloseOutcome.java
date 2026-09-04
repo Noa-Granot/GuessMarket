@@ -1,16 +1,22 @@
 package guessmarket.engine.model;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
- * What happened when an event was closed.
- *
- * remainingBalance is what the event's account still holds after the winners
- * have been paid. Per the lecturer's clarification of 9/08, this money is NOT
- * swept anywhere: the account keeps its final balance so that command 3 shows
- * how the event ended up.
+ * The result of closing an event. The event account is emptied: the winners are
+ * paid according to their holdings, any closing commission goes to the market
+ * maker, and whatever is left over goes to him as well.
  */
 public record CloseOutcome(String winningOptionName,
+                           long winningShares,
                            double grossPayout,
                            double commission,
-                           double netPayout,
-                           double remainingBalance) {
+                           double netPaidToWinners,
+                           double returnedToMarketMaker,
+                           Map<String, Double> payoutsByUser) {
+
+    public CloseOutcome {
+        payoutsByUser = new LinkedHashMap<>(payoutsByUser);
+    }
 }

@@ -1,8 +1,10 @@
 package guessmarket.ui.fx;
 
-import guessmarket.engine.api.EventDto;
+import guessmarket.engine.api.EventRoleDto;
 import guessmarket.engine.api.GuessMarketEngine;
+import guessmarket.engine.api.HoldingDto;
 import guessmarket.engine.api.UserDto;
+import guessmarket.engine.api.UserStateDto;
 
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -63,11 +65,17 @@ public class UsersController {
         this.engine = engine;
     }
 
+    /** Reloads from the engine, keeping the selected user if they are still there. */
     public void refresh() {
-        rows.clear();
-        clearDetails();
+        String keep = null;
+        UserRow selected = usersTable.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            keep = selected.getName();
+        }
 
+        rows.clear();
         if (engine == null || !engine.isLoaded()) {
+            clearDetails();
             return;
         }
 
@@ -80,6 +88,16 @@ public class UsersController {
                     user.marketMakerForEventIds()));
         }
         rows.setAll(built);
+
+        if (keep != null) {
+            for (UserRow row : rows) {
+                if (row.getName().equals(keep)) {
+                    usersTable.getSelectionModel().select(row);
+                    return;
+                }
+            }
+        }
+        clearDetails();
     }
 
     private void clearDetails() {
@@ -91,35 +109,37 @@ public class UsersController {
 
     private void showDetails(UserRow row) {
         clearDetails();
-
         if (row == null || engine == null || !engine.isLoaded()) {
             return;
         }
 
-        userTitle.setText(row.getName());
-        userBalanceLabel.setText(String.format("Account balance: %.2f", row.getBalance()));
+        UserStateDto state = engine.userState(row.getName());
+        userTitle.setText(state.name());
+        userBalanceLabel.setText(String.format("Account balance: %.2f", state.balance()));
 
-        if (row.getMarketMakerFor().isEmpty()) {
+        if (state.events().isEmpty()) {
             participationBox.getChildren().add(
-                    new Label("Not the market maker of any event."));
-        } else {
-            for (int eventId : row.getMarketMakerFor()) {
-                String name = nameOfEvent(eventId);
-                participationBox.getChildren().add(
-                        new Label("Market maker of event " + eventId + " - " + name));
-            }
+                    new Label("Not involved in any event yet."));
+            return;
         }
 
-        userEventDetailBox.getChildren().add(new Label(
-                "Trading details appear once users can trade, in the next stage of the exercise."));
-    }
+        for (EventRoleDto role : state.events()) {
+            String label = role.eventName() + "  (" + role.statusDisplay() + ")";
+            if (role.isMarketMaker()) {
+                label += "  ·  market maker";
+            }
+            Label heading = new Label(label);
+            heading.getStyleClass().add("section-title");
+            participationBox.getChildren().add(heading);
 
-    private String nameOfEvent(int eventId) {
-        for (EventDto event : engine.listEvents()) {
-            if (event.id() == eventId) {
-                return event.name();
+            if (role.holdings().isEmpty()) {
+                participationBox.getChildren().add(new Label("   holds no shares"));
+            } else {
+                for (HoldingDto holding : role.holdings()) {
+                    participationBox.getChildren().add(new Label(String.format(
+                            "   %d shares of %s", holding.shares(), holding.optionName())));
+                }
             }
         }
-        return "unknown event";
     }
 }

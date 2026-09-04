@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.Separator?>
@@ -29,6 +30,8 @@
                         <Label fx:id="filePathLabel" text="No file loaded"
                                maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="path-label"/>
                         <Region minWidth="8.0"/>
+                        <Label text="Acting as:" styleClass="filter-label"/>
+                        <ComboBox fx:id="actingAsBox" prefWidth="150.0"/>
                         <Label fx:id="loadMessage"/>
                         <ProgressBar fx:id="loadProgress" prefWidth="170.0" progress="0.0"/>
                     </children>

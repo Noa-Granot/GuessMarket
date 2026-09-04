@@ -1,46 +1,50 @@
-What changed in the engine
-==========================
+Opening, trading and closing
+============================
 
-Nothing about the LMSR maths changed. The additions are the exercise 2
-schema and the concepts that come with it.
+The engine now moves money between users and events. An event still does not
+know about users, and a user still does not know about events, so the engine
+is the only place the two meet.
 
 NEW
-    EventType            LMSR or Order Book
-    OrderBookConfig      inital, d, allow-mint from the file
-    User                 name, account, which events they run
-    UserDto              for the users screen
+    InsufficientFundsException   an account was asked for more than it holds
+    HoldingDto                   how many shares of an option a user holds
+    UserStateDto, EventRoleDto   the users screen
+    OpenReceipt, PayoutDto       results of opening and closing
+    QuoteDto                     what a purchase would cost, before buying
+    BuyDialog                    option, quantity, and a live price
 
 CHANGED
-    EventStatus          now Not started -> Active -> Closed
-    Event                created through Event.lmsr(...) or Event.orderBook(...)
-                         holds its type, its market maker, and either an
-                         LmsrMarket or an OrderBookConfig
-    MarketSystem         holds users; the single manager account is gone,
-                         because every user now has their own
-    EventDto             gained typeDisplay, marketMakerName, accountBalance
-    XmlLoader            reads the official GM-EX2-Schema.xsd shape
-    generated            12 binding classes instead of 7
+    Account          withdraw refuses to go below zero, and canAfford asks
+                     without throwing
+    Event            records who holds which shares; open() takes the money
+                     the market maker paid; buy() takes a user name;
+                     close() pays the winners by holding and empties the account
+    Transaction      carries the buyer's name
+    CloseOutcome     carries what each winner is owed
+    EventStateDto    carries the description, type, market maker, participations
+                     and the opening cost
+    engine           openEvent, buy and closeEvent all take a user name
+    events screen    Open, Buy and Close buttons, enabled by who you are acting
+                     as and by the state of the event
+    top bar          an "Acting as" selector
 
-REMOVED
-    managerBalance()     there is no single manager any more
+THE RULES, AS THE EXERCISE STATES THEM
+    Only the market maker of an event may open or close it.
+    Opening an LMSR event moves the subsidy from his account to the event.
+    Opening an order book event has him buy the initial stock, which is then
+    his, at initial x d.
+    He cannot open an event he cannot afford.
+    An on-purchase commission is added to what the buyer pays and goes into
+    the event account.
+    Closing pays the winners from the event account by their holdings. A
+    closing commission and anything left over both go to the market maker,
+    and the event account ends empty.
+    No user may go into a negative balance.
 
-NEW VALIDATION RULES
-    every user name is unique
-    every user starts with more than zero
-    a market maker cannot point at an event that does not exist
-    every event has exactly one market maker
-    an event has exactly one trading method
-    for order book events, d and inital are above zero and allow-mint
-    is true or false
+CHECKED ON PAPER
+    Money is conserved. Opening, one purchase and a close on small.xml event 1
+    starts with 10100 across the three users and ends with 10100.
+    Same for a 20% on-close event: 15000 in, 15000 out.
 
-SPELLINGS FROM THE OFFICIAL SCHEMA, KEPT AS THEY ARE
-    comision             one m
-    GM-mareket-maker     mareket
-    inital               inital
-
-NOT BUILT YET (weeks 2 and 3)
-    opening an event, which moves the subsidy or the initial stock from
-    the market maker's account
-    trading, both LMSR and order book
-    closing an event
-    the order book itself, matching, minting and the statistics
+NOT BUILT YET
+    Order book trading: orders, matching, minting, statistics. Week 3.

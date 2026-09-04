@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SplitPane?>
@@ -109,6 +110,15 @@
                         <Label fx:id="detailTitle" styleClass="detail-title" wrapText="true"
                                text="Select an event to see its details"/>
                         <Label fx:id="detailSubtitle" wrapText="true" styleClass="detail-subtitle"/>
+
+                        <HBox fx:id="actionBar" spacing="8.0" styleClass="action-bar">
+                            <children>
+                                <Button fx:id="openButton" text="Open event" onAction="#onOpenEvent"/>
+                                <Button fx:id="buyButton" text="Buy shares" onAction="#onBuyShares"/>
+                                <Button fx:id="closeButton" text="Close event" onAction="#onCloseEvent"/>
+                            </children>
+                        </HBox>
+                        <Label fx:id="actionHint" wrapText="true" styleClass="detail-subtitle"/>
 
                         <!-- shown for LMSR events -->
                         <VBox fx:id="lmsrBox" spacing="4.0" managed="false" visible="false"/>

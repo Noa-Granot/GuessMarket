@@ -2,10 +2,12 @@ package guessmarket.ui.fx;
 
 import guessmarket.engine.api.GuessMarketEngine;
 import guessmarket.engine.api.LoadException;
+import guessmarket.engine.api.UserDto;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Tab;
@@ -24,6 +26,7 @@ import java.util.List;
 public class MainController {
 
     @FXML private Button loadButton;
+    @FXML private ComboBox<String> actingAsBox;
     @FXML private Label filePathLabel;
     @FXML private ProgressBar loadProgress;
     @FXML private Label loadMessage;
@@ -42,6 +45,13 @@ public class MainController {
         loadProgress.setProgress(0);
         loadMessage.setText("");
         filePathLabel.setText("No file loaded");
+        actingAsBox.setDisable(true);
+        actingAsBox.setPromptText("no users");
+        actingAsBox.valueProperty().addListener((obs, was, now) -> {
+            if (eventsViewController != null) {
+                eventsViewController.setActingUser(now);
+            }
+        });
         setTabsEnabled(false);
     }
 
@@ -53,12 +63,20 @@ public class MainController {
         if (usersViewController != null) {
             usersViewController.setEngine(engine);
         }
+        if (eventsViewController != null) {
+            // The users screen has to follow whatever the events screen changes.
+            eventsViewController.setOnSystemChanged(this::refreshUsersOnly);
+        }
     }
 
     public void setStage(Stage stage) {
         this.stage = stage;
     }
 
+    /**
+     * The exercise requires a file chooser dialog, so there is deliberately no
+     * text field for typing a path.
+     */
     @FXML
     private void onLoadFile() {
         FileChooser chooser = new FileChooser();
@@ -109,13 +127,35 @@ public class MainController {
     }
 
     private void refreshViews() {
+        refreshActingUsers();
         if (eventsViewController != null) {
             eventsViewController.refresh();
         }
+        refreshUsersOnly();
+    }
+
+    private void refreshUsersOnly() {
         if (usersViewController != null) {
             usersViewController.refresh();
         }
     }
+
+    /** Rebuilds the list of users and selects the first one. */
+    private void refreshActingUsers() {
+        actingAsBox.getItems().clear();
+        if (engine == null || !engine.isLoaded()) {
+            actingAsBox.setDisable(true);
+            return;
+        }
+        for (UserDto user : engine.listUsers()) {
+            actingAsBox.getItems().add(user.name());
+        }
+        actingAsBox.setDisable(actingAsBox.getItems().isEmpty());
+        if (!actingAsBox.getItems().isEmpty()) {
+            actingAsBox.getSelectionModel().selectFirst();
+        }
+    }
+
 
     private void unbindProgress() {
         loadProgress.progressProperty().unbind();

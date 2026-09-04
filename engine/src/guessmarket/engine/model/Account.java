@@ -3,18 +3,16 @@ package guessmarket.engine.model;
 import java.io.Serializable;
 
 /**
- * A balance that money moves in and out of. Used twice in exercise 1: once per
- * event (the event's own "contract" account) and once for the events manager,
- * who funds the LMSR subsidies.
- *
- * Design note: no overdraft guard here. In exercise 1 the manager account is
- * expected to go negative while subsidies are outstanding, and the single user
- * has unlimited funds. Exercise 2 introduces per-user balances that must not go
- * negative, which is where a guard belongs.
+ * A balance that money moves in and out of. One account per event, plus one
+ * per user. A withdrawal that would take the balance below zero is refused,
+ * because no user may go into a negative balance.
  */
 public class Account implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
+
+    /** Money is compared with a small tolerance so rounding cannot block a payout. */
+    private static final double EPSILON = 0.000001;
 
     private double balance;
 
@@ -30,6 +28,10 @@ public class Account implements Serializable {
         return balance;
     }
 
+    public boolean canAfford(double amount) {
+        return amount <= balance + EPSILON;
+    }
+
     public void deposit(double amount) {
         if (amount < 0) {
             throw new IllegalArgumentException("Cannot deposit a negative amount");
@@ -41,6 +43,16 @@ public class Account implements Serializable {
         if (amount < 0) {
             throw new IllegalArgumentException("Cannot withdraw a negative amount");
         }
+        if (!canAfford(amount)) {
+            throw new InsufficientFundsException(balance, amount);
+        }
         balance -= amount;
+    }
+
+    /** Empties the account and returns what was in it. */
+    public double drain() {
+        double remaining = balance;
+        balance = 0.0;
+        return remaining;
     }
 }
