@@ -1,0 +1,74 @@
+What to check - order book
+==========================
+
+The LMSR side has not changed. These are the new things.
+
+SETUP
+[ ] Load samples\small.xml
+[ ] Event 2 "World Cap Winner" is an Order Book event, d=1, allow-mint=true,
+    initial=100, and its market maker is Avrum
+
+OPENING AN ORDER BOOK EVENT
+[ ] Acting as Avrum, select event 2. The Open button is enabled
+[ ] Open it. The dialog says he pays 100.00   (initial 100 x d 1)
+[ ] Users tab: Avrum drops from 1000.00 to 900.00
+[ ] Event account shows 100.00
+[ ] Both options now show 100 shares in issue, and Participations shows
+    Avrum holding 100 of each
+
+THE BOOK IS EMPTY AT FIRST
+[ ] Select event 2. Both book panes show LAST BID ASK MID SPREAD all as "-"
+[ ] That is correct: with no orders there is nothing to compute them from
+
+A PLAIN MATCH
+[ ] As Avrum, Place order: option 1, Sell, 40 shares at 0.60
+[ ] The ASK on that option becomes 0.60. LAST is still "-", nothing has traded
+[ ] As Tikva, Place order: option 1, Buy, 25 at 0.60
+[ ] Message says filled 25, resting 0
+[ ] LAST becomes 0.60, ASK stays 0.60 with 15 left
+[ ] Tikva pays 25 x 0.60 = 15.00 plus 15% commission 2.25 = 17.25
+[ ] Avrum receives 15.00 and also the 2.25 commission
+
+ONE ORDER EATING SEVERAL   (appendix B's own example)
+[ ] Have two sell orders resting on the same option at the same price, one for
+    20 shares and one for 40, from two different users
+[ ] Buy 50 at that price
+[ ] It takes all 20 from the first and 30 from the second
+[ ] 10 shares are left resting on the second order
+
+A MINT
+[ ] As Tikva, Place order: option 1, Buy, 35 at 0.58. Nothing matches, it rests
+[ ] As Menash, Place order: option 2, Buy, 35 at 0.42
+[ ] 0.58 + 0.42 = 1.00, so a mint happens
+[ ] The message shows two mint lines, one per buyer
+[ ] Tikva gets 35 of option 1 and pays 20.30; Menash gets 35 of option 2 and
+    pays 14.70
+[ ] The event account goes up by exactly 35.00, which is 35 x d
+[ ] Both options gain 35 shares in issue
+
+A MINT WHERE THE PRICES OVERSHOOT
+[ ] Rest a buy at 0.60 on option 1, then buy option 2 at 0.55
+[ ] The resting order pays its own 0.60; the new one pays 0.40, the complement
+[ ] The event account still receives exactly 1.00 per pair
+
+ORDERS THAT SHOULD BE REFUSED
+[ ] Price of 1.00 with d=1: refused, the cap is 0.99
+[ ] Price of 0 or a negative: refused
+[ ] Letters in the quantity or price box: the dialog says what is wrong
+[ ] Selling shares you do not hold: refused, naming how many you have
+[ ] Selling shares you have already offered: refused, saying they are committed
+[ ] Buying beyond your balance: refused, naming what is tied up in resting orders
+
+CLOSING AN ORDER BOOK EVENT
+[ ] As Avrum, close event 2 and pick a winner
+[ ] Every holder of the winning option is paid d per share, less any on-close
+    commission
+[ ] The event account ends at 0.00
+[ ] Add up all three balances: the total is the same as when the file loaded.
+    That is the check that matters most
+
+STATISTICS
+[ ] With a bid at 0.40 and an ask at 0.60: BID 0.40, ASK 0.60, MID 0.50,
+    SPREAD 0.20
+[ ] With only a bid: BID shows, ASK MID SPREAD stay "-"
+[ ] LAST only appears after something has actually traded
