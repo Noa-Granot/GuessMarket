@@ -115,6 +115,7 @@
                             <children>
                                 <Button fx:id="openButton" text="Open event" onAction="#onOpenEvent"/>
                                 <Button fx:id="buyButton" text="Buy shares" onAction="#onBuyShares"/>
+                                <Button fx:id="orderButton" text="Place order" onAction="#onPlaceOrder"/>
                                 <Button fx:id="closeButton" text="Close event" onAction="#onCloseEvent"/>
                             </children>
                         </HBox>

@@ -8,7 +8,13 @@ import guessmarket.engine.model.EventType;
 import guessmarket.engine.model.InsufficientFundsException;
 import guessmarket.engine.model.MarketSystem;
 import guessmarket.engine.model.Transaction;
+import guessmarket.engine.model.OrderBookConfig;
 import guessmarket.engine.model.User;
+import guessmarket.engine.orderbook.MatchResult;
+import guessmarket.engine.orderbook.Order;
+import guessmarket.engine.orderbook.OrderBook;
+import guessmarket.engine.orderbook.OrderSide;
+import guessmarket.engine.orderbook.Trade;
 import guessmarket.engine.persistence.SystemStateStore;
 import guessmarket.engine.xml.XmlLoader;
 
@@ -207,6 +213,130 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
                 toStateDto(event));
     }
 
+
+    @Override
+    public OrderReceipt placeOrder(int eventId, String userName, int optionIndex,
+                                   String side, long quantity, double price) {
+        Event event = findEvent(eventId);
+        User user = findUser(userName);
+
+        if (event.getStatus() != EventStatus.ACTIVE) {
+            throw new EngineException("\"" + event.getName() + "\" is not open for trading. It is "
+                    + event.getStatus().getDisplay().toLowerCase() + ".");
+        }
+        if (event.getType() != EventType.ORDER_BOOK) {
+            throw new EngineException("\"" + event.getName()
+                    + "\" is an LMSR event, so shares are bought directly rather than by order.");
+        }
+
+        OrderSide orderSide = OrderSide.BUY.getDisplay().equalsIgnoreCase(side)
+                ? OrderSide.BUY : OrderSide.SELL;
+
+        checkTheyCanCoverIt(event, user, optionIndex, orderSide, quantity, price);
+
+        MatchResult result;
+        try {
+            result = event.submitOrder(userName, optionIndex, orderSide, quantity, price);
+        } catch (RuntimeException e) {
+            throw new EngineException(e.getMessage(), e);
+        }
+        applyMoney(event, result);
+
+        List<TradeDto> trades = new ArrayList<>();
+        for (Trade trade : result.getTrades()) {
+            trades.add(toDto(trade));
+        }
+
+        return new OrderReceipt(
+                userName,
+                orderSide.getDisplay(),
+                event.getOptions().get(optionIndex).getName(),
+                quantity,
+                result.getRestingQuantity(),
+                trades,
+                user.getAccount().getBalance(),
+                toStateDto(event));
+    }
+
+    /**
+     * An order must be covered before it is accepted, counting what the user
+     * already has tied up in orders that are still resting. That way a match
+     * can never fail halfway through for want of money or shares.
+     */
+    private void checkTheyCanCoverIt(Event event, User user, int optionIndex,
+                                     OrderSide side, long quantity, double price) {
+        if (side == OrderSide.BUY) {
+            double needed = quantity * price + event.commissionOnPurchase(quantity * price);
+            double committed = event.cashCommittedBy(user.getName());
+            double available = user.getAccount().getBalance() - committed;
+            if (needed > available + 0.000001) {
+                throw new EngineException(String.format(
+                        "%s needs %.2f for this order but only has %.2f available%s.",
+                        user.getName(), needed, Math.max(0, available),
+                        committed > 0 ? String.format(" (%.2f is tied up in orders already placed)", committed) : ""));
+            }
+            return;
+        }
+
+        long held = event.sharesHeldBy(user.getName(), optionIndex);
+        long committed = event.sharesCommittedBy(user.getName(), optionIndex);
+        long available = held - committed;
+        if (quantity > available) {
+            throw new EngineException(String.format(
+                    "%s wants to sell %d shares of %s but only has %d available%s.",
+                    user.getName(), quantity,
+                    event.getOptions().get(optionIndex).getName(), Math.max(0, available),
+                    committed > 0 ? " (" + committed + " are already offered for sale)" : ""));
+        }
+    }
+
+    /** Applies everything the match worked out, in one place. */
+    private void applyMoney(Event event, MatchResult result) {
+        for (Map.Entry<String, Double> entry : result.getCashDelta().entrySet()) {
+            double amount = entry.getValue();
+            User user = findUser(entry.getKey());
+            if (amount < 0) {
+                user.getAccount().withdraw(-amount);
+            } else if (amount > 0) {
+                user.getAccount().deposit(amount);
+            }
+        }
+        if (result.getIntoEventAccount() > 0) {
+            event.getAccount().deposit(result.getIntoEventAccount());
+        }
+        if (result.getCommissionToMarketMaker() > 0) {
+            findUser(event.getMarketMakerName()).getAccount()
+                    .deposit(result.getCommissionToMarketMaker());
+            event.addCommissionCollected(result.getCommissionToMarketMaker());
+        }
+    }
+
+    private List<OrderDto> toOrderDtos(List<Order> orders) {
+        List<OrderDto> result = new ArrayList<>();
+        for (Order order : orders) {
+            result.add(new OrderDto(
+                    order.getSerial(),
+                    order.getUserName(),
+                    order.getSide().getDisplay(),
+                    order.getRemaining(),
+                    order.getQuantity(),
+                    order.getPrice()));
+        }
+        return result;
+    }
+
+    private TradeDto toDto(Trade trade) {
+        return new TradeDto(
+                trade.serial(),
+                trade.kind() == Trade.Kind.MINT ? "Mint" : "Match",
+                trade.buyerName(),
+                trade.sellerName(),
+                trade.optionName(),
+                trade.quantity(),
+                trade.price(),
+                trade.commission());
+    }
+
     @Override
     public CloseReceipt closeEvent(int eventId, String userName, int winningOptionIndex) {
         Event event = findEvent(eventId);
@@ -339,6 +469,28 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
             }
         }
 
+        List<BookDto> books = new ArrayList<>();
+        for (int i = 0; i < event.getBooks().size(); i++) {
+            OrderBook book = event.getBooks().get(i);
+            books.add(new BookDto(
+                    book.getOptionName(),
+                    book.getLast(),
+                    book.getBestBid(),
+                    book.getBestAsk(),
+                    book.getMid(),
+                    book.getSpread(),
+                    toOrderDtos(book.getBids()),
+                    toOrderDtos(book.getAsks()),
+                    options.get(i).getSharesBought()));
+        }
+
+        List<TradeDto> trades = new ArrayList<>();
+        for (Trade trade : event.getTradesNewestFirst()) {
+            trades.add(toDto(trade));
+        }
+
+        OrderBookConfig config = event.getOrderBookConfig();
+
         return new EventStateDto(
                 event.getId(),
                 event.getName(),
@@ -354,6 +506,10 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
                 history,
                 participations,
                 event.getWinningOptionName(),
-                event.openingCost());
+                event.openingCost(),
+                books,
+                trades,
+                config == null ? null : (double) config.d(),
+                config != null && config.allowMint());
     }
 }

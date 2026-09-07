@@ -47,7 +47,7 @@ Run -> Edit Configurations -> + -> Application
 
 Then "Modify options" -> tick "Add VM options", and paste:
 
-   --module-path "C:\CS_Degree\JAVA\javafx-sdk-25\openjfx-25.0.4_windows-x64_bin-sdk\javafx-sdk-25.0.4\lib" --add-modules javafx.controls,javafx.fxml
+    --module-path "C:\CS_Degree\JAVA\javafx-sdk-25\lib" --add-modules javafx.controls,javafx.fxml
 
 Adjust the path if you extracted the SDK elsewhere.
 

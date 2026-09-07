@@ -44,6 +44,15 @@ public interface GuessMarketEngine {
     /** Buys shares of an LMSR event on behalf of a user. */
     PurchaseReceipt buy(int eventId, String userName, int optionIndex, long quantity);
 
+    /**
+     * Submits an order to an order book event. Any matching happens straight
+     * away and whatever is left rests in the book.
+     *
+     * @param side "Buy" or "Sell"
+     */
+    OrderReceipt placeOrder(int eventId, String userName, int optionIndex,
+                            String side, long quantity, double price);
+
     /** Closes an event and decides it. Only its market maker may do this. */
     CloseReceipt closeEvent(int eventId, String userName, int winningOptionIndex);
 

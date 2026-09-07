@@ -17,7 +17,11 @@ public record EventStateDto(int id,
                             List<TransactionDto> historyNewestFirst,
                             List<HoldingDto> participations,
                             String winningOptionName,
-                            double openingCost) {
+                            double openingCost,
+                            List<BookDto> books,
+                            List<TradeDto> tradesNewestFirst,
+                            Double basePrice,
+                            boolean allowMint) {
 
     public boolean isClosed() {
         return winningOptionName != null;

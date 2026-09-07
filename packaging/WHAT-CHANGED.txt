@@ -1,50 +1,57 @@
-Opening, trading and closing
-============================
+Order book trading
+==================
 
-The engine now moves money between users and events. An event still does not
-know about users, and a user still does not know about events, so the engine
-is the only place the two meet.
-
-NEW
-    InsufficientFundsException   an account was asked for more than it holds
-    HoldingDto                   how many shares of an option a user holds
-    UserStateDto, EventRoleDto   the users screen
-    OpenReceipt, PayoutDto       results of opening and closing
-    QuoteDto                     what a purchase would cost, before buying
-    BuyDialog                    option, quantity, and a live price
+NEW PACKAGE  guessmarket.engine.orderbook
+    OrderSide     Buy or Sell
+    Order         one instruction, with what is left of it
+    OrderBook     the resting orders for one option, plus LAST BID ASK MID
+                  SPREAD. Bids are kept highest first, asks lowest first, and
+                  orders at the same price keep their arrival order
+    Trade         one completed piece of business, a match or a mint
+    MatchResult   what an order caused: the trades, who owes what, and how much
+                  is still resting. The event works it out, the engine applies
+                  it, because an event does not know about accounts
 
 CHANGED
-    Account          withdraw refuses to go below zero, and canAfford asks
-                     without throwing
-    Event            records who holds which shares; open() takes the money
-                     the market maker paid; buy() takes a user name;
-                     close() pays the winners by holding and empties the account
-    Transaction      carries the buyer's name
-    CloseOutcome     carries what each winner is owed
-    EventStateDto    carries the description, type, market maker, participations
-                     and the opening cost
-    engine           openEvent, buy and closeEvent all take a user name
-    events screen    Open, Buy and Close buttons, enabled by who you are acting
-                     as and by the state of the event
-    top bar          an "Acting as" selector
+    Event            holds one book per option, and does the matching and the
+                     minting
+    EventStateDto    carries the books, the trades and the base value
+    engine           placeOrder(event, user, option, side, quantity, price)
+    events screen    a Place order button on order book events, replacing Buy
+                     shares, which now only appears on LMSR events
+    book panes       show the five statistics and the resting orders, and the
+                     trade list underneath
 
-THE RULES, AS THE EXERCISE STATES THEM
-    Only the market maker of an event may open or close it.
-    Opening an LMSR event moves the subsidy from his account to the event.
-    Opening an order book event has him buy the initial stock, which is then
-    his, at initial x d.
-    He cannot open an event he cannot afford.
-    An on-purchase commission is added to what the buyer pays and goes into
-    the event account.
-    Closing pays the winners from the event account by their holdings. A
-    closing commission and anything left over both go to the market maker,
-    and the event account ends empty.
-    No user may go into a negative balance.
+HOW MATCHING WORKS
+    A buy order takes the cheapest asks first, a sell order the highest bids,
+    and one order may consume several. The order that was already waiting sets
+    the price, as an exchange does. Nobody trades with themselves.
 
-CHECKED ON PAPER
-    Money is conserved. Opening, one purchase and a close on small.xml event 1
-    starts with 10100 across the three users and ends with 10100.
-    Same for a 20% on-close event: 15000 in, 15000 out.
+HOW MINTING WORKS
+    Only when the event allows it, and only between two buy orders on opposite
+    options whose prices together reach the base value d.
+    The order already waiting pays its own price. The order that has just
+    arrived pays whatever completes d. So the event account always receives
+    exactly d for each new pair, however far the two prices overshoot.
+    The quantity is the smaller of the two.
+
+MONEY
+    An order is only accepted if the user can cover it, counting what they
+    already have tied up in orders still resting. So a match can never fail
+    part way through.
+    An on-purchase commission goes straight to the market maker, as the course
+    simulation does it. An on-close commission is taken from the winners.
+
+CHECKED ON PAPER, BEFORE ANY OF IT RAN
+    Appendix B's own example: a buy of 50 against resting sells of 20 and 40
+    takes 20 then 30, leaving 10. Correct.
+    The simulation's mint: buy 35 YES at 0.58 and 35 NO at 0.42 puts exactly
+    35.00 into the event account, and each side pays 20.30 and 14.70. Correct.
+    A mint at 0.60 and 0.55 has the resting side pay 0.60 and the new side pay
+    0.40, so the account still receives exactly d per pair. Correct.
+    A whole event, opened, traded, minted and closed, conserves money to the
+    penny on both commission methods, and the event account ends at zero.
 
 NOT BUILT YET
-    Order book trading: orders, matching, minting, statistics. Week 3.
+    Nothing from the base requirements. What is left is resize checking,
+    packaging and the readme.

@@ -7,7 +7,11 @@ import guessmarket.engine.api.EventStateDto;
 import guessmarket.engine.api.GuessMarketEngine;
 import guessmarket.engine.api.HoldingDto;
 import guessmarket.engine.api.OpenReceipt;
+import guessmarket.engine.api.BookDto;
 import guessmarket.engine.api.OptionStateDto;
+import guessmarket.engine.api.OrderDto;
+import guessmarket.engine.api.OrderReceipt;
+import guessmarket.engine.api.TradeDto;
 import guessmarket.engine.api.PayoutDto;
 import guessmarket.engine.api.PurchaseReceipt;
 import guessmarket.engine.api.TransactionDto;
@@ -64,6 +68,7 @@ public class EventsController {
     @FXML private HBox actionBar;
     @FXML private Button openButton;
     @FXML private Button buyButton;
+    @FXML private Button orderButton;
     @FXML private Button closeButton;
     @FXML private Label actionHint;
     @FXML private VBox lmsrBox;
@@ -281,6 +286,54 @@ public class EventsController {
     }
 
     @FXML
+    private void onPlaceOrder() {
+        EventStateDto state = selectedState();
+        if (state == null || actingUser == null) {
+            return;
+        }
+
+        Optional<OrderDialog.Choice> choice =
+                new OrderDialog(state, actingUser, 0).showAndWait();
+        if (choice.isEmpty()) {
+            return;
+        }
+        OrderDialog.Choice c = choice.get();
+
+        try {
+            OrderReceipt receipt = engine.placeOrder(
+                    state.id(), actingUser, c.optionIndex(), c.side(), c.quantity(), c.price());
+            refreshAll();
+
+            StringBuilder text = new StringBuilder();
+            text.append(String.format("%s order for %d shares of %s at %.2f.%n",
+                    receipt.sideDisplay(), receipt.quantitySubmitted(),
+                    receipt.optionName(), c.price()));
+            text.append(String.format("Filled straight away: %d%n", receipt.quantityFilled()));
+            text.append(String.format("Left resting in the book: %d%n", receipt.quantityResting()));
+
+            if (!receipt.trades().isEmpty()) {
+                text.append(System.lineSeparator()).append("Trades:").append(System.lineSeparator());
+                for (TradeDto trade : receipt.trades()) {
+                    if (trade.sellerName() == null) {
+                        text.append(String.format("  mint: %s receives %d %s at %.2f%n",
+                                trade.buyerName(), trade.quantity(),
+                                trade.optionName(), trade.price()));
+                    } else {
+                        text.append(String.format("  %s bought %d %s from %s at %.2f%n",
+                                trade.buyerName(), trade.quantity(), trade.optionName(),
+                                trade.sellerName(), trade.price()));
+                    }
+                }
+            }
+            text.append(System.lineSeparator())
+                .append(String.format("Balance now %.2f", receipt.balanceAfter()));
+            info("Order submitted", text.toString());
+        } catch (EngineException e) {
+            problem("The order was not accepted", e.getMessage());
+        }
+    }
+
+    @FXML
     private void onCloseEvent() {
         EventStateDto state = selectedState();
         if (state == null || actingUser == null) {
@@ -407,13 +460,16 @@ public class EventsController {
         openButton.setDisable(!(isMaker && notStarted));
         closeButton.setDisable(!(isMaker && active));
         buyButton.setDisable(!(active && lmsr));
+        orderButton.setDisable(!(active && !lmsr));
+        buyButton.setVisible(lmsr);
+        buyButton.setManaged(lmsr);
+        orderButton.setVisible(!lmsr);
+        orderButton.setManaged(!lmsr);
 
         if (actingUser == null) {
             actionHint.setText("Choose who you are acting as, at the top of the window.");
         } else if (!isMaker && notStarted) {
             actionHint.setText("Only " + state.marketMakerName() + " can open this event.");
-        } else if (ORDER_BOOK.equals(state.typeDisplay()) && active) {
-            actionHint.setText("Order book trading is not implemented yet.");
         } else if (state.isClosed()) {
             actionHint.setText("This event is closed and can no longer be traded.");
         } else {
@@ -458,25 +514,57 @@ public class EventsController {
      * The sketch puts one order book per option, side by side. The books
      * themselves are filled in once order book trading is implemented.
      */
+    /** The sketch puts one order book per option, side by side. */
     private void showOrderBook(EventStateDto state) {
         show(orderBookBox, true);
-
-        List<OptionStateDto> options = state.options();
         VBox[] boxes = {bookOneBox, bookTwoBox};
+        List<BookDto> books = state.books();
 
-        for (int i = 0; i < boxes.length; i++) {
-            String name = i < options.size() ? options.get(i).name() : "Option " + (i + 1);
-            boxes[i].getChildren().add(sectionTitle(name));
-            boxes[i].getChildren().add(new Label("LAST   -"));
-            boxes[i].getChildren().add(new Label("BID    -"));
-            boxes[i].getChildren().add(new Label("ASK    -"));
-            boxes[i].getChildren().add(new Label("MID    -"));
-            boxes[i].getChildren().add(new Label("SPREAD -"));
-            if (i < options.size()) {
-                boxes[i].getChildren().add(new Label(
-                        "Shares in issue: " + options.get(i).sharesBought()));
+        for (int i = 0; i < boxes.length && i < books.size(); i++) {
+            BookDto book = books.get(i);
+            VBox box = boxes[i];
+
+            box.getChildren().add(sectionTitle(book.optionName()));
+            box.getChildren().add(new Label("LAST    " + money(book.last())));
+            box.getChildren().add(new Label("BID     " + money(book.bestBid())));
+            box.getChildren().add(new Label("ASK     " + money(book.bestAsk())));
+            box.getChildren().add(new Label("MID     " + money(book.mid())));
+            box.getChildren().add(new Label("SPREAD  " + money(book.spread())));
+            box.getChildren().add(new Label("Shares in issue: " + book.sharesInIssue()));
+
+            box.getChildren().add(sectionTitle("Buy orders"));
+            addOrders(box, book.bids());
+            box.getChildren().add(sectionTitle("Sell orders"));
+            addOrders(box, book.asks());
+        }
+
+        if (!state.tradesNewestFirst().isEmpty()) {
+            orderBookBox.getChildren().add(sectionTitle("Trades, newest first"));
+            for (TradeDto trade : state.tradesNewestFirst()) {
+                String who = trade.sellerName() == null
+                        ? trade.buyerName() + " (mint)"
+                        : trade.buyerName() + " from " + trade.sellerName();
+                orderBookBox.getChildren().add(new Label(String.format(
+                        "#%d  %s  %d %s at %.2f",
+                        trade.serial(), who, trade.quantity(), trade.optionName(), trade.price())));
             }
         }
+    }
+
+    private void addOrders(VBox box, List<OrderDto> orders) {
+        if (orders.isEmpty()) {
+            box.getChildren().add(new Label("   none"));
+            return;
+        }
+        for (OrderDto order : orders) {
+            box.getChildren().add(new Label(String.format(
+                    "   %s  %d at %.2f", order.userName(), order.remaining(), order.price())));
+        }
+    }
+
+    /** The statistics are missing rather than zero when nothing supports them. */
+    private String money(Double value) {
+        return value == null ? "-" : String.format("%.2f", value);
     }
 
     private void showParticipations(EventStateDto state) {
