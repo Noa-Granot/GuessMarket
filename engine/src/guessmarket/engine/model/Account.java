@@ -1,6 +1,9 @@
 package guessmarket.engine.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A balance that money moves in and out of. One account per event, plus one
@@ -16,12 +19,16 @@ public class Account implements Serializable {
 
     private double balance;
 
+    /** BONUS: every balance this account has had, for the graph. */
+    private final List<BalancePoint> history = new ArrayList<>();
+
     public Account() {
         this(0.0);
     }
 
     public Account(double initialBalance) {
         this.balance = initialBalance;
+        history.add(new BalancePoint(0, initialBalance));
     }
 
     public double getBalance() {
@@ -37,6 +44,7 @@ public class Account implements Serializable {
             throw new IllegalArgumentException("Cannot deposit a negative amount");
         }
         balance += amount;
+        record();
     }
 
     public void withdraw(double amount) {
@@ -47,12 +55,23 @@ public class Account implements Serializable {
             throw new InsufficientFundsException(balance, amount);
         }
         balance -= amount;
+        record();
     }
 
     /** Empties the account and returns what was in it. */
     public double drain() {
         double remaining = balance;
         balance = 0.0;
+        record();
         return remaining;
+    }
+
+    private void record() {
+        history.add(new BalancePoint(history.size(), balance));
+    }
+
+    /** BONUS: the balance after every change, oldest first. */
+    public List<BalancePoint> getHistory() {
+        return Collections.unmodifiableList(history);
     }
 }

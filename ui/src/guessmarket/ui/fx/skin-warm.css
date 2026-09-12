@@ -1,0 +1,48 @@
+/* BONUS: a warm skin. Only colours and fonts change; no layout moves. */
+.root-pane {
+    -fx-font-family: "Georgia", serif;
+    -fx-font-size: 14px;
+    -fx-base: #f4ece1;
+    -fx-background: #fbf6ef;
+    -fx-control-inner-background: #fffaf3;
+}
+
+.app-title {
+    -fx-font-size: 21px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #8a4b2a;
+    -fx-padding: 8 0 4 0;
+}
+
+.load-bar { -fx-padding: 6 14 10 14; }
+
+.path-label {
+    -fx-text-fill: #6b5644;
+    -fx-border-color: #d8c3aa;
+    -fx-border-radius: 3;
+    -fx-padding: 4 8 4 8;
+}
+
+.filter-bar { -fx-padding: 8 10 8 10; }
+.filter-label { -fx-font-weight: bold; -fx-text-fill: #8a4b2a; -fx-padding: 0 4 0 0; }
+
+.detail-pane { -fx-padding: 12 14 14 14; }
+.detail-title { -fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #8a4b2a; }
+.detail-subtitle { -fx-text-fill: #7a6754; }
+.section-title { -fx-font-weight: bold; -fx-text-fill: #a0662f; -fx-padding: 8 0 2 0; }
+
+.book-pane, .participation-pane {
+    -fx-border-color: #d8c3aa;
+    -fx-border-radius: 4;
+    -fx-padding: 8;
+}
+
+.balance-badge {
+    -fx-font-weight: bold;
+    -fx-text-fill: #8a4b2a;
+    -fx-border-color: #d8c3aa;
+    -fx-border-radius: 4;
+    -fx-padding: 5 10 5 10;
+}
+
+.action-bar { -fx-padding: 6 0 2 0; }

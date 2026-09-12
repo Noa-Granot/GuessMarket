@@ -3,6 +3,7 @@ package guessmarket.ui.fx;
 import guessmarket.engine.api.EventStateDto;
 import guessmarket.engine.api.OptionStateDto;
 
+import javafx.event.ActionEvent;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
@@ -53,9 +54,14 @@ class OrderDialog extends Dialog<OrderDialog.Choice> {
         quantityField.setPromptText("whole number above zero");
         priceField.setPromptText(String.format("up to %.2f", highestPrice));
 
+        // The hint can be a whole sentence, so let it wrap rather than be cut off.
+        hint.setWrapText(true);
+        hint.setMaxWidth(300);
+
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(8);
+        grid.setPrefWidth(380);
         grid.add(new Label("Option:"), 0, 0);
         grid.add(optionBox, 1, 0);
         grid.add(new Label("Action:"), 0, 1);
@@ -69,6 +75,15 @@ class OrderDialog extends Dialog<OrderDialog.Choice> {
 
         ButtonType submit = new ButtonType("Submit", ButtonBar.ButtonData.OK_DONE);
         getDialogPane().getButtonTypes().addAll(submit, ButtonType.CANCEL);
+
+        // Without this the dialog would close on a bad entry and the person
+        // would never see why. Consuming the event keeps it open.
+        getDialogPane().lookupButton(submit).addEventFilter(ActionEvent.ACTION, event -> {
+            if (parseQuantity() == null || parsePrice() == null) {
+                updateHint();
+                event.consume();
+            }
+        });
 
         quantityField.textProperty().addListener((o, a, b) -> updateHint());
         priceField.textProperty().addListener((o, a, b) -> updateHint());
@@ -111,15 +126,14 @@ class OrderDialog extends Dialog<OrderDialog.Choice> {
         Double price = parsePrice();
 
         if (quantity == null) {
-            hint.setText("Shares must be a whole number above zero.");
+            hint.setText("Shares: a whole number above 0.");
             return;
         }
         if (price == null) {
-            hint.setText(String.format(
-                    "The price must be above zero and no more than %.2f.", highestPrice));
+            hint.setText(String.format("Price: 0.01 to %.2f", highestPrice));
             return;
         }
-        hint.setText(String.format("Total: %d x %.2f = %.2f",
+        hint.setText(String.format("Total  %d x %.2f = %.2f",
                 quantity, price, quantity * price));
     }
 }

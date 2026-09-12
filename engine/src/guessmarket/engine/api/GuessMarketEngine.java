@@ -57,6 +57,14 @@ public interface GuessMarketEngine {
     CloseReceipt closeEvent(int eventId, String userName, int winningOptionIndex);
 
     /**
+     * Bonus. Creates a new event, with the given user as its market maker. The
+     * event starts not started, like any other.
+     *
+     * @return the new event's number
+     */
+    int createEvent(String userName, NewEventSpec spec);
+
+    /**
      * Bonus. Writes the whole system, trade history included, to a file.
      *
      * @param pathWithoutExtension path and file name with no extension; the

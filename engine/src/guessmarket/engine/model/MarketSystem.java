@@ -60,6 +60,15 @@ public class MarketSystem implements Serializable {
         return eventsById.containsKey(id);
     }
 
+    /** BONUS: the smallest number no event is using. */
+    public int nextFreeEventId() {
+        int candidate = 1;
+        while (eventsById.containsKey(candidate)) {
+            candidate++;
+        }
+        return candidate;
+    }
+
     public boolean isEmpty() {
         return eventsById.isEmpty();
     }

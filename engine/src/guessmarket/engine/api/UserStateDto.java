@@ -6,5 +6,6 @@ import java.util.List;
 public record UserStateDto(String name,
                            double balance,
                            boolean isMarketMaker,
-                           List<EventRoleDto> events) {
+                           List<EventRoleDto> events,
+                           SeriesDto balanceHistory) {
 }

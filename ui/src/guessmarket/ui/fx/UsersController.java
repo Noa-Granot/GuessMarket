@@ -3,6 +3,7 @@ package guessmarket.ui.fx;
 import guessmarket.engine.api.EventRoleDto;
 import guessmarket.engine.api.GuessMarketEngine;
 import guessmarket.engine.api.HoldingDto;
+import guessmarket.engine.api.PointDto;
 import guessmarket.engine.api.UserDto;
 import guessmarket.engine.api.UserStateDto;
 
@@ -11,6 +12,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -35,6 +38,7 @@ public class UsersController {
     @FXML private Label userBalanceLabel;
     @FXML private VBox participationBox;
     @FXML private VBox userEventDetailBox;
+    @FXML private LineChart<Number, Number> balanceChart;
 
     private final ObservableList<UserRow> rows = FXCollections.observableArrayList();
 
@@ -100,11 +104,23 @@ public class UsersController {
         clearDetails();
     }
 
+    /** BONUS: this user's balance after every change. */
+    private void showBalanceChart(UserStateDto state) {
+        balanceChart.getData().clear();
+        XYChart.Series<Number, Number> line = new XYChart.Series<>();
+        line.setName(state.name());
+        for (PointDto point : state.balanceHistory().points()) {
+            line.getData().add(new XYChart.Data<>(point.step(), point.value()));
+        }
+        balanceChart.getData().add(line);
+    }
+
     private void clearDetails() {
         userTitle.setText("Select a user to see their details");
         userBalanceLabel.setText("");
         participationBox.getChildren().clear();
         userEventDetailBox.getChildren().clear();
+        balanceChart.getData().clear();
     }
 
     private void showDetails(UserRow row) {
@@ -116,6 +132,8 @@ public class UsersController {
         UserStateDto state = engine.userState(row.getName());
         userTitle.setText(state.name());
         userBalanceLabel.setText(String.format("Account balance: %.2f", state.balance()));
+        showBalanceChart(state);
+        Animations.fadeIn(userTitle);
 
         if (state.events().isEmpty()) {
             participationBox.getChildren().add(

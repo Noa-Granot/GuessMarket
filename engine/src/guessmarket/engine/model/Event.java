@@ -62,6 +62,10 @@ public class Event implements Serializable {
     private int nextOrderSerial = 1;
     private int nextTradeSerial = 1;
 
+    /** BONUS: the price of each option after every change, for the graph. */
+    private final List<List<PricePoint>> priceHistory = new ArrayList<>();
+    private int priceStep = 0;
+
     private String marketMakerName;
     private EventStatus status = EventStatus.NOT_STARTED;
     private String winningOptionName = null;
@@ -101,6 +105,9 @@ public class Event implements Serializable {
             for (EventOption option : built) {
                 books.add(new OrderBook(option.getName()));
             }
+        }
+        for (int i = 0; i < built.size(); i++) {
+            priceHistory.add(new ArrayList<>());
         }
     }
 
@@ -243,6 +250,7 @@ public class Event implements Serializable {
             }
         }
         status = EventStatus.ACTIVE;
+        recordPrices();
     }
 
     /**
@@ -275,6 +283,7 @@ public class Event implements Serializable {
                 shareCost,
                 commission);
         history.add(transaction);
+        recordPrices();
         return transaction;
     }
 
@@ -395,6 +404,9 @@ public class Event implements Serializable {
         }
         if (!order.isFilled()) {
             books.get(optionIndex).add(order);
+        }
+        if (result.tradedAnything()) {
+            recordPrices();
         }
         result.setRestingQuantity(order.getRemaining());
         return result;
@@ -523,6 +535,34 @@ public class Event implements Serializable {
         }
         owned[optionIndex] -= quantity;
         addHolding(to, optionIndex, quantity);
+    }
+
+    /**
+     * BONUS: takes a reading of every option's price. For an LMSR event that is
+     * the formula's price; for an order book it is the last traded price, which
+     * is the only price that actually happened.
+     */
+    private void recordPrices() {
+        priceStep++;
+        if (type == EventType.LMSR) {
+            double[] prices = currentPrices();
+            for (int i = 0; i < prices.length; i++) {
+                priceHistory.get(i).add(new PricePoint(priceStep, prices[i]));
+            }
+            return;
+        }
+        for (int i = 0; i < books.size(); i++) {
+            Double last = books.get(i).getLast();
+            if (last != null) {
+                priceHistory.get(i).add(new PricePoint(priceStep, last));
+            }
+        }
+    }
+
+    /** BONUS: the price readings for one option, oldest first. */
+    public List<PricePoint> getPriceHistory(int optionIndex) {
+        validateOptionIndex(optionIndex);
+        return Collections.unmodifiableList(priceHistory.get(optionIndex));
     }
 
     private void requireOrderBook() {

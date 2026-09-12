@@ -6,6 +6,7 @@ import guessmarket.engine.api.GuessMarketEngine;
 import guessmarket.engine.api.OptionStateDto;
 import guessmarket.engine.api.QuoteDto;
 
+import javafx.event.ActionEvent;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
@@ -41,9 +42,14 @@ class BuyDialog extends Dialog<BuyDialog.Choice> {
         optionBox.getSelectionModel().selectFirst();
         quantityField.setPromptText("whole number above zero");
 
+        // The quote line doubles as the explanation, so let it wrap.
+        quoteLabel.setWrapText(true);
+        quoteLabel.setMaxWidth(300);
+
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(8);
+        grid.setPrefWidth(380);
         grid.add(new Label("Option:"), 0, 0);
         grid.add(optionBox, 1, 0);
         grid.add(new Label("Shares:"), 0, 1);
@@ -54,6 +60,14 @@ class BuyDialog extends Dialog<BuyDialog.Choice> {
 
         ButtonType buy = new ButtonType("Buy", ButtonBar.ButtonData.OK_DONE);
         getDialogPane().getButtonTypes().addAll(buy, ButtonType.CANCEL);
+
+        // Keep the dialog open on a bad entry so the reason stays visible.
+        getDialogPane().lookupButton(buy).addEventFilter(ActionEvent.ACTION, event -> {
+            if (parseQuantity() == null) {
+                updateQuote(engine, state);
+                event.consume();
+            }
+        });
 
         quantityField.textProperty().addListener((obs, was, now) -> updateQuote(engine, state));
         optionBox.valueProperty().addListener((obs, was, now) -> updateQuote(engine, state));
@@ -84,14 +98,13 @@ class BuyDialog extends Dialog<BuyDialog.Choice> {
     private void updateQuote(GuessMarketEngine engine, EventStateDto state) {
         Long quantity = parseQuantity();
         if (quantity == null) {
-            quoteLabel.setText("Enter a whole number above zero.");
+            quoteLabel.setText("Shares: a whole number above 0.");
             return;
         }
         try {
             QuoteDto quote = engine.quote(state.id(),
                     optionBox.getSelectionModel().getSelectedIndex(), quantity);
-            quoteLabel.setText(String.format(
-                    "shares %.2f  +  commission %.2f  =  %.2f",
+            quoteLabel.setText(String.format("%.2f + %.2f = %.2f",
                     quote.shareCost(), quote.commission(), quote.total()));
         } catch (EngineException e) {
             quoteLabel.setText(e.getMessage());

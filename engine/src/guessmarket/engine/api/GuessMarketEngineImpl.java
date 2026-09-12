@@ -8,7 +8,10 @@ import guessmarket.engine.model.EventType;
 import guessmarket.engine.model.InsufficientFundsException;
 import guessmarket.engine.model.MarketSystem;
 import guessmarket.engine.model.Transaction;
+import guessmarket.engine.model.BalancePoint;
+import guessmarket.engine.model.CommissionType;
 import guessmarket.engine.model.OrderBookConfig;
+import guessmarket.engine.model.PricePoint;
 import guessmarket.engine.model.User;
 import guessmarket.engine.orderbook.MatchResult;
 import guessmarket.engine.orderbook.Order;
@@ -102,11 +105,17 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
                     held));
         }
 
+        List<PointDto> balancePoints = new ArrayList<>();
+        for (BalancePoint point : user.getAccount().getHistory()) {
+            balancePoints.add(new PointDto(point.step(), point.balance()));
+        }
+
         return new UserStateDto(
                 user.getName(),
                 user.getAccount().getBalance(),
                 user.isMarketMaker(),
-                roles);
+                roles,
+                new SeriesDto(user.getName(), balancePoints));
     }
 
     private List<HoldingDto> holdingsOf(Event event, String userName) {
@@ -373,6 +382,76 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
                 toStateDto(event));
     }
 
+    /**
+     * BONUS. The same rules a loaded file has to satisfy are applied here, so a
+     * created event can never be something the loader would have rejected.
+     */
+    @Override
+    public int createEvent(String userName, NewEventSpec spec) {
+        MarketSystem loaded = requireLoaded();
+        User user = findUser(userName);
+
+        List<String> problems = new ArrayList<>();
+        if (spec.name() == null || spec.name().isBlank()) {
+            problems.add("The event needs a name.");
+        }
+        if (spec.commissionPercent() < 0 || spec.commissionPercent() > 90) {
+            problems.add("The commission must be between 0 and 90.");
+        }
+        if (spec.optionNames() == null || spec.optionNames().size() != 2) {
+            problems.add("An event needs exactly two options.");
+        } else {
+            for (String option : spec.optionNames()) {
+                if (option == null || option.isBlank()) {
+                    problems.add("Neither option may have an empty name.");
+                    break;
+                }
+            }
+        }
+        if (spec.orderBook()) {
+            if (spec.basePrice() <= 0) {
+                problems.add("The base value d must be above zero.");
+            }
+            if (spec.initialShares() <= 0) {
+                problems.add("The initial number of shares must be above zero.");
+            }
+        } else if (spec.liquidityB() <= 0) {
+            problems.add("The liquidity value b must be above zero.");
+        }
+        if (!problems.isEmpty()) {
+            throw new EngineException(String.join(" ", problems));
+        }
+
+        CommissionType commissionType;
+        try {
+            commissionType = CommissionType.fromXml(spec.commissionType());
+        } catch (RuntimeException e) {
+            throw new EngineException("The commission type must be on-purchase or on-close.", e);
+        }
+
+        List<String> options = new ArrayList<>();
+        for (String option : spec.optionNames()) {
+            options.add(option.trim());
+        }
+
+        int id = loaded.nextFreeEventId();
+        Event event = spec.orderBook()
+                ? Event.orderBook(id, spec.name().trim(), safe(spec.description()),
+                        spec.commissionPercent(), commissionType, options,
+                        new OrderBookConfig(spec.initialShares(), spec.basePrice(), spec.allowMint()))
+                : Event.lmsr(id, spec.name().trim(), safe(spec.description()),
+                        spec.commissionPercent(), commissionType, options, spec.liquidityB());
+
+        event.setMarketMakerName(user.getName());
+        loaded.addEvent(event);
+        user.addMarketMakerEvent(id);
+        return id;
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
+    }
+
     @Override
     public void saveState(String pathWithoutExtension) {
         stateStore.save(pathWithoutExtension, requireLoaded());
@@ -489,6 +568,15 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
             trades.add(toDto(trade));
         }
 
+        List<SeriesDto> priceHistory = new ArrayList<>();
+        for (int i = 0; i < options.size(); i++) {
+            List<PointDto> points = new ArrayList<>();
+            for (PricePoint point : event.getPriceHistory(i)) {
+                points.add(new PointDto(point.step(), point.price()));
+            }
+            priceHistory.add(new SeriesDto(options.get(i).getName(), points));
+        }
+
         OrderBookConfig config = event.getOrderBookConfig();
 
         return new EventStateDto(
@@ -510,6 +598,7 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
                 books,
                 trades,
                 config == null ? null : (double) config.d(),
-                config != null && config.allowMint());
+                config != null && config.allowMint(),
+                priceHistory);
     }
 }

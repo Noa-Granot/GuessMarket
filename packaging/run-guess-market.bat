@@ -1,13 +1,7 @@
 @echo off
-REM ---------------------------------------------------------------
-REM  Guess Market - exercise 1
-REM  Launches the console application.
-REM
-REM  %~dp0 is the folder this batch file sits in, with a trailing
-REM  backslash. Every path below is built from it, so the program
-REM  runs correctly no matter which directory it is started from
-REM  and no matter where the folder is copied to.
-REM ---------------------------------------------------------------
+REM Guess Market - exercise 2
+REM %~dp0 is the folder this file sits in, so the program runs
+REM correctly from any directory and from anywhere it is copied to.
 
 setlocal
 
@@ -15,8 +9,16 @@ set "HERE=%~dp0"
 
 if not exist "%HERE%ui.jar" (
     echo ERROR: ui.jar was not found next to this batch file.
-    echo Make sure ui.jar, engine.jar and the lib folder are all in:
+    echo Make sure ui.jar, engine.jar, lib and lib-fx are all in:
     echo   %HERE%
+    pause
+    exit /b 1
+)
+
+if not exist "%HERE%lib-fx\javafx.controls.jar" (
+    echo ERROR: the JavaFX files were not found.
+    echo The folder lib-fx has to sit next to this batch file and contain
+    echo both the javafx jar files and the dll files.
     pause
     exit /b 1
 )
@@ -29,6 +31,17 @@ if errorlevel 1 (
     exit /b 1
 )
 
-java -cp "%HERE%ui.jar;%HERE%engine.jar;%HERE%lib\*" guessmarket.ui.console.Main
+java -Djava.library.path="%HERE%lib-fx" ^
+     --module-path "%HERE%lib-fx" ^
+     --add-modules javafx.controls,javafx.fxml ^
+     --enable-native-access=javafx.graphics ^
+     -cp "%HERE%ui.jar;%HERE%engine.jar;%HERE%lib\*;%HERE%lib-fx\*" ^
+     guessmarket.ui.fx.GuessMarketApp
+
+if errorlevel 1 (
+    echo.
+    echo The program stopped with an error. The message above says why.
+    pause
+)
 
 endlocal

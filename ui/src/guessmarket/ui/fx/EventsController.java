@@ -13,7 +13,9 @@ import guessmarket.engine.api.OrderDto;
 import guessmarket.engine.api.OrderReceipt;
 import guessmarket.engine.api.TradeDto;
 import guessmarket.engine.api.PayoutDto;
+import guessmarket.engine.api.PointDto;
 import guessmarket.engine.api.PurchaseReceipt;
+import guessmarket.engine.api.SeriesDto;
 import guessmarket.engine.api.TransactionDto;
 
 import javafx.beans.property.SimpleDoubleProperty;
@@ -22,6 +24,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
@@ -73,9 +77,12 @@ public class EventsController {
     @FXML private Label actionHint;
     @FXML private VBox lmsrBox;
     @FXML private VBox orderBookBox;
+    @FXML private VBox tradesBox;
     @FXML private VBox bookOneBox;
     @FXML private VBox bookTwoBox;
     @FXML private VBox participationBox;
+    @FXML private VBox chartBox;
+    @FXML private LineChart<Number, Number> priceChart;
 
     private final ObservableList<EventRow> allRows = FXCollections.observableArrayList();
     private FilteredList<EventRow> visibleRows;
@@ -381,6 +388,7 @@ public class EventsController {
     private void refreshAll() {
         refresh();
         onSystemChanged.run();
+        Animations.pulse(detailTitle);
     }
 
     private void info(String header, String body) {
@@ -392,6 +400,7 @@ public class EventsController {
     }
 
     private void problem(String header, String body) {
+        Animations.shake(actionBar);
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle(header);
         alert.setHeaderText(header);
@@ -408,10 +417,14 @@ public class EventsController {
         lmsrBox.getChildren().clear();
         bookOneBox.getChildren().clear();
         bookTwoBox.getChildren().clear();
+        tradesBox.getChildren().clear();
         participationBox.getChildren().clear();
+        priceChart.getData().clear();
         show(lmsrBox, false);
         show(orderBookBox, false);
+        show(tradesBox, false);
         show(participationBox, false);
+        show(chartBox, false);
         actionBar.setVisible(false);
         actionBar.setManaged(false);
     }
@@ -441,6 +454,25 @@ public class EventsController {
             showLmsr(state);
         }
         showParticipations(state);
+        showChart(state);
+        Animations.fadeIn(detailTitle);
+    }
+
+    /** BONUS: the value of each option after every change. */
+    private void showChart(EventStateDto state) {
+        priceChart.getData().clear();
+        boolean anyPoints = false;
+
+        for (SeriesDto series : state.priceHistory()) {
+            XYChart.Series<Number, Number> line = new XYChart.Series<>();
+            line.setName(series.name());
+            for (PointDto point : series.points()) {
+                line.getData().add(new XYChart.Data<>(point.step(), point.value()));
+                anyPoints = true;
+            }
+            priceChart.getData().add(line);
+        }
+        show(chartBox, anyPoints);
     }
 
     /**
@@ -539,12 +571,13 @@ public class EventsController {
         }
 
         if (!state.tradesNewestFirst().isEmpty()) {
-            orderBookBox.getChildren().add(sectionTitle("Trades, newest first"));
+            show(tradesBox, true);
+            tradesBox.getChildren().add(sectionTitle("Trades, newest first"));
             for (TradeDto trade : state.tradesNewestFirst()) {
                 String who = trade.sellerName() == null
                         ? trade.buyerName() + " (mint)"
                         : trade.buyerName() + " from " + trade.sellerName();
-                orderBookBox.getChildren().add(new Label(String.format(
+                tradesBox.getChildren().add(new Label(String.format(
                         "#%d  %s  %d %s at %.2f",
                         trade.serial(), who, trade.quantity(), trade.optionName(), trade.price())));
             }

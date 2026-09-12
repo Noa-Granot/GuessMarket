@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SplitPane?>
@@ -44,6 +46,13 @@
 
                         <Label text="Single event details and trade" styleClass="section-title"/>
                         <VBox fx:id="userEventDetailBox" spacing="3.0"/>
+
+                        <Label text="Account balance over time" styleClass="section-title"/>
+                        <LineChart fx:id="balanceChart" prefHeight="220.0" legendVisible="false"
+                                   createSymbols="false" animated="false">
+                            <xAxis><NumberAxis label="change" tickLabelsVisible="false"/></xAxis>
+                            <yAxis><NumberAxis label="balance"/></yAxis>
+                        </LineChart>
 
                     </children>
                 </VBox>

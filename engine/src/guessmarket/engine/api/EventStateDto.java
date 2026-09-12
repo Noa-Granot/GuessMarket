@@ -21,7 +21,8 @@ public record EventStateDto(int id,
                             List<BookDto> books,
                             List<TradeDto> tradesNewestFirst,
                             Double basePrice,
-                            boolean allowMint) {
+                            boolean allowMint,
+                            List<SeriesDto> priceHistory) {
 
     public boolean isClosed() {
         return winningOptionName != null;

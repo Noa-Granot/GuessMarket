@@ -1,38 +1,24 @@
-### IntelliJ IDEA ###
+### Build output ###
 out/
-!**/src/main/**/out/
-!**/src/test/**/out/
-.kotlin
-
-### Eclipse ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
 bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
+dist/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
-.vscode/
-
-### Mac OS ###
-.DS_Store
-
+### IntelliJ IDEA ###
 .idea/
 *.iml
 
-### External Libraries / Dependencies ###
-lib/
-lib-fx/
-*.jar
+### Other IDEs ###
+.vscode/
+.classpath
+.project
+.settings/
+/nbproject/private/
+/nbbuild/
+/.nb-gradle/
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### Saved system state (exercise 1 bonus) ###
+*.gm
