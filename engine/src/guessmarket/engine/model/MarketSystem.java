@@ -26,10 +26,23 @@ public class MarketSystem implements Serializable {
     }
 
     public void addUser(User user) {
-        if (usersByName.containsKey(user.getName())) {
+        if (hasUser(user.getName())) {
             throw new IllegalArgumentException("Duplicate user name: " + user.getName());
         }
         usersByName.put(user.getName(), user);
+    }
+
+    /** Names are compared without case, so Tikva and tikva are the same person. */
+    public boolean hasUser(String name) {
+        if (name == null) {
+            return false;
+        }
+        for (String existing : usersByName.keySet()) {
+            if (existing.equalsIgnoreCase(name.trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public List<Event> getEvents() {
@@ -50,10 +63,30 @@ public class MarketSystem implements Serializable {
 
     public User getUser(String name) {
         User user = usersByName.get(name);
+        if (user == null && name != null) {
+            for (Map.Entry<String, User> entry : usersByName.entrySet()) {
+                if (entry.getKey().equalsIgnoreCase(name.trim())) {
+                    return entry.getValue();
+                }
+            }
+        }
         if (user == null) {
             throw new IllegalArgumentException("No user named " + name + " is loaded");
         }
         return user;
+    }
+
+    /** Exercise 3: an event name may not be taken twice across the whole system. */
+    public boolean hasEventNamed(String name) {
+        if (name == null) {
+            return false;
+        }
+        for (Event event : eventsById.values()) {
+            if (event.getName().equalsIgnoreCase(name.trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean hasEvent(int id) {

@@ -46,6 +46,45 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
     }
 
     /**
+     * Exercise 3 starts with an empty system rather than nothing, because
+     * people log in before any file has been uploaded.
+     */
+    @Override
+    public synchronized void ensureStarted() {
+        if (system == null) {
+            system = new MarketSystem();
+        }
+    }
+
+    @Override
+    public synchronized void registerUser(String userName) {
+        ensureStarted();
+        if (userName == null || userName.isBlank()) {
+            throw new EngineException("A user name cannot be empty.");
+        }
+        String name = userName.trim();
+        if (system.hasUser(name)) {
+            throw new EngineException("The name \"" + name + "\" is already taken. Choose another one.");
+        }
+        system.addUser(new User(name, 0));
+    }
+
+    @Override
+    public synchronized boolean isNameTaken(String userName) {
+        return system != null && system.hasUser(userName);
+    }
+
+    @Override
+    public synchronized double addFunds(String userName, double amount) {
+        if (amount <= 0) {
+            throw new EngineException("The amount to add must be above zero.");
+        }
+        User user = findUser(userName);
+        user.getAccount().deposit(amount);
+        return user.getAccount().getBalance();
+    }
+
+    /**
      * If the loader throws, the assignment below is never reached and the
      * system loaded before stays in place.
      */

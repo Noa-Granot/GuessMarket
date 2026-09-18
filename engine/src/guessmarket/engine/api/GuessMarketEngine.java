@@ -16,6 +16,26 @@ public interface GuessMarketEngine {
     boolean isLoaded();
 
     /**
+     * Exercise 3. Makes sure there is a system to work with even before any
+     * file has been uploaded, because people log in first.
+     */
+    void ensureStarted();
+
+    /**
+     * Exercise 3. Adds a user with the given name. Names are unique and are
+     * compared without case.
+     *
+     * @throws EngineException if the name is already taken or is empty
+     */
+    void registerUser(String userName);
+
+    /** Exercise 3. True if someone is already using that name. */
+    boolean isNameTaken(String userName);
+
+    /** Exercise 3. Puts money into a user's own account. */
+    double addFunds(String userName, double amount);
+
+    /**
      * Reads the file at the given path and replaces whatever is loaded. If the
      * file is not valid the current system is left alone and a LoadException is
      * thrown carrying every problem found.

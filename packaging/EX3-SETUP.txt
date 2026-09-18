@@ -1,0 +1,76 @@
+STEP 5 - THE WAR ARTIFACT
+-------------------------
+Project Structure -> Artifacts
+
+If step 3 created one, select it. Otherwise:
+    +  ->  Web Application: Archive  ->  For 'server'
+
+    Name it something short, because the name becomes the context path
+    the client has to call:
+        GuessMarket
+
+    In the Output Layout the war needs, inside WEB-INF\lib:
+        the engine module output  (as a jar)
+        gson.jar
+    and NOT the tomcat jars, which the server already has.
+
+    So: exactly one war, carrying everything except what Tomcat provides.
+
+
+STEP 6 - RUN CONFIGURATION
+--------------------------
+Run -> Edit Configurations -> + -> Tomcat Server -> Local
+    Application server:  Tomcat 10
+    Deployment tab -> + -> Artifact -> the war
+    Application context:  /GuessMarket
+    URL: http://localhost:8080/GuessMarket
+
+Run it. A browser should open on the page listing the endpoints.
+If that page appears, the war deployed and the servlets are live.
+
+
+STEP 7 - POSTMAN
+----------------
+Do all of this in Postman before writing any client code.
+
+    POST  http://localhost:8080/GuessMarket/login?username=Avrum
+          -> 200, body: Avrum
+
+    POST  http://localhost:8080/GuessMarket/login?username=Tikva
+          -> use a NEW Postman tab or clear cookies first, otherwise the
+             session from the first call answers Avrum again
+
+    POST  http://localhost:8080/GuessMarket/login?username=Avrum
+          -> 409, body: The name "Avrum" is already taken. Choose another one.
+
+    POST  http://localhost:8080/GuessMarket/login?username=avrum
+          -> 409 as well, names are compared without case
+
+    POST  http://localhost:8080/GuessMarket/login?username=
+          -> 400, Please enter a user name.
+
+    GET   http://localhost:8080/GuessMarket/whoami
+          -> 200 with your name, or 401 if that tab has no session
+
+    GET   http://localhost:8080/GuessMarket/users
+          -> 200, a JSON array with every user, their balance and whether
+             they are a market maker
+
+    POST  http://localhost:8080/GuessMarket/funds?amount=500
+          -> 200 with the new balance
+    POST  http://localhost:8080/GuessMarket/funds?amount=-5
+          -> 400, The amount to add must be above zero.
+    POST  http://localhost:8080/GuessMarket/funds?amount=abc
+          -> 400, The amount has to be a number.
+
+    GET   http://localhost:8080/GuessMarket/logout
+          -> 200, then whoami gives 401 again
+
+Postman keeps cookies per tab, which is how you pretend to be two different
+people at once. That is exactly what two clients will do later.
+
+
+WHAT THIS DAY DOES NOT COVER
+----------------------------
+Uploading files, events over HTTP, and the client itself. Those are the next
+blocks. Today ends when Postman can register users and is refused a duplicate.

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Guess Market server</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 40px; color: #263043; }
+        h1 { font-size: 22px; }
+        code { background: #f2f4f7; padding: 2px 5px; border-radius: 3px; }
+        li { margin-bottom: 6px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <h1>Guess Market server</h1>
+    <p>The server is running. The JavaFX client talks to the addresses below;
+       this page only confirms the war deployed.</p>
+    <ul>
+        <li><code>POST /login?username=NAME</code> registers a name and starts a session</li>
+        <li><code>GET /whoami</code> the name this session is logged in as</li>
+        <li><code>GET /users</code> everyone in the system</li>
+        <li><code>POST /funds?amount=100</code> adds money to your own account</li>
+        <li><code>GET /logout</code> ends the session</li>
+    </ul>
+</body>
+</html>

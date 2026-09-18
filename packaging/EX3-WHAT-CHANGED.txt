@@ -1,0 +1,49 @@
+The server module
+=================
+
+NEW MODULE  server
+    guessmarket.server.engine
+        ServerEngine        the one engine every servlet shares. Created once,
+                            started empty, never written to disk.
+
+    guessmarket.server.servlets
+        LoginServlet        /login    a name, no password, refused if taken
+        LogoutServlet       /logout   ends the session, the user stays in the market
+        WhoAmIServlet       /whoami   who this session is
+        UsersServlet        /users    everyone, for the other-users list and for polling
+        FundsServlet        /funds    put money into your own account
+
+    guessmarket.server.utils
+        ServletUtils        one shared Gson, and writeJson / writeError / writeText
+        SessionUtils        reads and sets the name on the session
+        Constants           parameter and attribute names, in one place
+
+    web/WEB-INF/web.xml     the servlets declare their own paths, so this is
+                            almost empty. A war needs one.
+    web/index.html          confirms the war deployed and lists the endpoints.
+
+CHANGED IN THE ENGINE
+    GuessMarketEngine   gained ensureStarted, registerUser, isNameTaken, addFunds
+    MarketSystem        gained hasUser and hasEventNamed, and user lookup is now
+                        case-insensitive
+
+DECISIONS
+    Who you are comes from the session, not from a parameter. Otherwise any
+    client could top up somebody else's balance by changing the URL.
+
+    registerUser is synchronised, so two people sending the same name at the
+    same moment cannot both get in. Servlets run on many threads at once and
+    this is the first place that matters.
+
+    A new user starts with a balance of zero and adds their own money, because
+    the exercise 3 file no longer carries starting cash.
+
+    Names are compared without case and trimmed, so "Avrum", "avrum" and
+    "  Avrum  " are one person.
+
+    Errors come back as a plain sentence with a real HTTP status, so the client
+    can show the body as it is: 409 for a taken name, 400 for bad input, 401
+    for not logged in.
+
+NOT YET
+    File upload, events over HTTP, the client. Next blocks.
