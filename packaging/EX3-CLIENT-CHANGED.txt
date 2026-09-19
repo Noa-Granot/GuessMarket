@@ -1,0 +1,64 @@
+The login window, and the shell it opens into
+=============================================
+
+WHAT WAS AND WAS NOT CHECKED
+    The client was type-checked against a hand written stub of the JavaFX API,
+    because your lib-fx jars are built for Java 25 and the sandbox compiler is
+    21, so a real compile is impossible there. That catches my typos and wrong
+    signatures in my own code. It does not catch anything about how JavaFX
+    actually behaves. This is the first code in the project nobody has run.
+    Expect the first build to have something to say.
+
+NEW  client/src/guessmarket/client/fx/GuessMarketClientApp.java
+        The application. One running copy is one person: it holds one
+        HttpGuessMarketEngine, which holds one session cookie. That is what
+        makes two clients on one machine two people rather than one person
+        twice. Shows the login screen, swaps to the main screen on success,
+        and back again on logout.
+
+NEW  client/src/guessmarket/client/fx/LoginPane.java
+        A name and nothing else, as the exercise insists. The server's refusal
+        sentence is shown as it is. Enter does the same as the button.
+        The call runs on a Task, off the JavaFX thread; only the two handlers
+        touch the controls. A server that is down leaves the window alive and
+        puts the reason on screen.
+
+NEW  client/src/guessmarket/client/fx/ClientShell.java
+        The Events and Account tabs from the sketch, both empty, plus who you
+        are and a logout button. It exists so the login, the session, the
+        window and the logout can be proved before either screen is written.
+        There is no "acting as" control: a person is whoever the session says.
+
+NEW  client/src/guessmarket/client/fx/client.css
+
+CHANGED  client/.../net/HttpGuessMarketEngine.java
+        The cached answers are now volatile and the event map concurrent, so
+        the poll timer and a button click cannot leave a half written cache.
+        No lock around the HTTP call itself: two threads may occasionally
+        fetch the same thing twice, which costs one request, where a lock
+        would let a slow poll block a click.
+
+        Honest note: a test with four poll threads and a clicking thread found
+        no failure either before or after this change, so it is insurance
+        rather than a bug that was caught in the act.
+
+CHANGED  client/.../net/ServerConnection.java
+        base() and defaultBase(), so the login screen can show where this
+        client is pointed.
+
+THE RUN CONFIGURATION
+    Run -> Edit Configurations -> + -> Application
+      Name        Guess Market Client
+      Module      client
+      Main class  guessmarket.client.fx.GuessMarketClientApp
+      VM options  --module-path "C:\CS_Degree\JAVA\javafx-sdk-25\openjfx-25.0.4_windows-x64_bin-sdk\javafx-sdk-25.0.4\lib"
+                  --add-modules javafx.controls,javafx.fxml
+                  --enable-native-access=javafx.graphics
+      Modify options -> Allow multiple instances     <- the one that matters
+
+    Optional, to point one client somewhere else:
+      -Dguessmarket.server=http://localhost:8080/GuessMarket
+
+WHAT THIS DOES NOT DO
+    Nothing is listed, nothing is traded, nothing polls. Both tabs are empty.
+    That is the next zip.

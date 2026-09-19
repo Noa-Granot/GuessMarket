@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import java.lang.String?>
+
+<!--
+    The events screen, taken from exercise 2 and pointed at the server.
+
+    The filter line and the table are exactly as they were: the rows now
+    arrive over HTTP instead of from an engine in this process, and nothing
+    below the table knows the difference. The right half is still a
+    placeholder; the details and one order book pane per option go there next.
+-->
+<SplitPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="guessmarket.client.fx.EventsController"
+           dividerPositions="0.62">
+    <items>
+
+        <!-- Left half of the sketch: the filter line above the list of events -->
+        <BorderPane>
+            <top>
+                <VBox spacing="6.0">
+                    <children>
+                        <FlowPane hgap="16.0" vgap="6.0" styleClass="filter-bar">
+                            <children>
+
+                                <HBox spacing="4.0" alignment="CENTER_LEFT">
+                                    <children>
+                                        <Label text="Method:" styleClass="filter-label"/>
+                                        <fx:define>
+                                            <ToggleGroup fx:id="typeFilter"/>
+                                        </fx:define>
+                                        <ToggleButton text="All" toggleGroup="$typeFilter" selected="true">
+                                            <userData><String fx:value="All"/></userData>
+                                        </ToggleButton>
+                                        <ToggleButton text="LMSR" toggleGroup="$typeFilter">
+                                            <userData><String fx:value="LMSR"/></userData>
+                                        </ToggleButton>
+                                        <ToggleButton text="Order Book" toggleGroup="$typeFilter">
+                                            <userData><String fx:value="Order Book"/></userData>
+                                        </ToggleButton>
+                                    </children>
+                                </HBox>
+
+                                <HBox spacing="4.0" alignment="CENTER_LEFT">
+                                    <children>
+                                        <Label text="Status:" styleClass="filter-label"/>
+                                        <fx:define>
+                                            <ToggleGroup fx:id="statusFilter"/>
+                                        </fx:define>
+                                        <ToggleButton text="All" toggleGroup="$statusFilter" selected="true">
+                                            <userData><String fx:value="All"/></userData>
+                                        </ToggleButton>
+                                        <ToggleButton text="Not started" toggleGroup="$statusFilter">
+                                            <userData><String fx:value="Not started"/></userData>
+                                        </ToggleButton>
+                                        <ToggleButton text="Active" toggleGroup="$statusFilter">
+                                            <userData><String fx:value="Active"/></userData>
+                                        </ToggleButton>
+                                        <ToggleButton text="Closed" toggleGroup="$statusFilter">
+                                            <userData><String fx:value="Closed"/></userData>
+                                        </ToggleButton>
+                                    </children>
+                                </HBox>
+
+                                <HBox spacing="4.0" alignment="CENTER_LEFT">
+                                    <children>
+                                        <Label text="Commission:" styleClass="filter-label"/>
+                                        <fx:define>
+                                            <ToggleGroup fx:id="commissionFilter"/>
+                                        </fx:define>
+                                        <ToggleButton text="All" toggleGroup="$commissionFilter" selected="true">
+                                            <userData><String fx:value="All"/></userData>
+                                        </ToggleButton>
+                                        <ToggleButton text="On purchase" toggleGroup="$commissionFilter">
+                                            <userData><String fx:value="on every purchase"/></userData>
+                                        </ToggleButton>
+                                        <ToggleButton text="On close" toggleGroup="$commissionFilter">
+                                            <userData><String fx:value="when the event closes"/></userData>
+                                        </ToggleButton>
+                                    </children>
+                                </HBox>
+
+                            </children>
+                        </FlowPane>
+
+                        <HBox spacing="8.0" alignment="CENTER_LEFT" styleClass="events-bar">
+                            <children>
+                                <Button fx:id="refreshButton" text="Refresh" onAction="#onRefresh"/>
+                                <Label fx:id="statusLabel" styleClass="events-status"/>
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+            </top>
+
+            <center>
+                <TableView fx:id="eventsTable">
+                    <columns>
+                        <TableColumn fx:id="nameColumn" text="Event" prefWidth="180.0"/>
+                        <TableColumn fx:id="statusColumn" text="Status" prefWidth="90.0"/>
+                        <TableColumn fx:id="typeColumn" text="Method" prefWidth="90.0"/>
+                        <TableColumn fx:id="commissionColumn" text="Commission" prefWidth="160.0"/>
+                        <TableColumn fx:id="makerColumn" text="Market maker" prefWidth="110.0"/>
+                        <TableColumn fx:id="balanceColumn" text="Account" prefWidth="90.0"/>
+                    </columns>
+                </TableView>
+            </center>
+        </BorderPane>
+
+        <!-- Right half of the sketch: event details and trade. Next. -->
+        <ScrollPane fitToWidth="true" styleClass="detail-scroll">
+            <content>
+                <VBox spacing="8.0" styleClass="detail-pane">
+                    <children>
+                        <Label fx:id="detailTitle" styleClass="detail-title" wrapText="true"
+                               text="Select an event to see its details"/>
+                        <Label fx:id="detailSubtitle" wrapText="true" styleClass="detail-subtitle"/>
+                        <Region prefHeight="8.0"/>
+                        <Label styleClass="detail-subtitle" wrapText="true"
+                               text="The details, the trade buttons and one order book pane per option go here."/>
+                    </children>
+                </VBox>
+            </content>
+        </ScrollPane>
+
+    </items>
+</SplitPane>

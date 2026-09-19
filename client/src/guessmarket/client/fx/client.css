@@ -1,0 +1,205 @@
+/*
+ * The client's own look. Kept separate from the exercise 2 stylesheet so the
+ * two applications can be styled apart, and small on purpose: the screens that
+ * matter are still to come.
+ */
+
+.root {
+    -fx-font-family: "Segoe UI", system-ui, sans-serif;
+    -fx-font-size: 13px;
+}
+
+/* ---------- login ---------- */
+
+.login {
+    -fx-background-color: #f6f7f9;
+}
+
+.login-title {
+    -fx-font-size: 27px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #263043;
+}
+
+.login-subtitle {
+    -fx-text-fill: #6b7280;
+    -fx-text-alignment: center;
+    -fx-wrap-text: true;
+}
+
+.login-field {
+    -fx-pref-width: 260px;
+    -fx-pref-height: 34px;
+    -fx-font-size: 14px;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-border-color: #d4dde3;
+}
+
+.login-field:focused {
+    -fx-border-color: #0e5e63;
+}
+
+.login-button {
+    -fx-pref-width: 260px;
+    -fx-pref-height: 34px;
+    -fx-background-color: #0e5e63;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.login-button:hover {
+    -fx-background-color: #0b4c50;
+}
+
+.login-button:disabled {
+    -fx-opacity: 0.55;
+}
+
+.login-error {
+    -fx-text-fill: #9f1239;
+    -fx-background-color: #fdeef2;
+    -fx-border-color: #f6cdd8;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-padding: 8px 12px;
+    -fx-max-width: 320px;
+    -fx-text-alignment: center;
+}
+
+.login-address {
+    -fx-text-fill: #9ca3af;
+    -fx-font-size: 11px;
+}
+
+/* ---------- the main window ---------- */
+
+.shell-header {
+    -fx-background-color: white;
+    -fx-border-color: transparent transparent #e4e7ec transparent;
+}
+
+.shell-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #263043;
+}
+
+.shell-who {
+    -fx-text-fill: #6b7280;
+}
+
+.shell-logout {
+    -fx-background-color: transparent;
+    -fx-border-color: #d4dde3;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+}
+
+.shell-logout:hover {
+    -fx-border-color: #0e5e63;
+    -fx-text-fill: #0e5e63;
+}
+
+.placeholder {
+    -fx-background-color: #f6f7f9;
+}
+
+.placeholder-heading {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4b5563;
+}
+
+.placeholder-detail {
+    -fx-text-fill: #9ca3af;
+    -fx-text-alignment: center;
+}
+
+/* ---------- the events screen ---------- */
+
+.filter-bar {
+    -fx-background-color: white;
+    -fx-padding: 8px 10px;
+    -fx-border-color: transparent transparent #e4e7ec transparent;
+}
+
+.filter-label {
+    -fx-text-fill: #6b7280;
+    -fx-font-size: 12px;
+}
+
+.events-bar {
+    -fx-padding: 6px 10px;
+}
+
+.events-status {
+    -fx-text-fill: #6b7280;
+    -fx-font-size: 12px;
+}
+
+.detail-scroll {
+    -fx-background-color: #f6f7f9;
+}
+
+.detail-pane {
+    -fx-padding: 14px;
+}
+
+.detail-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #263043;
+}
+
+.detail-subtitle {
+    -fx-text-fill: #6b7280;
+}
+
+/* ---------- the account screen ---------- */
+
+.account {
+    -fx-background-color: #f6f7f9;
+}
+
+.load-bar {
+    -fx-padding: 4px 0;
+}
+
+.load-button {
+    -fx-background-color: #0e5e63;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+}
+
+.load-button:hover { -fx-background-color: #0b4c50; }
+.load-button:disabled { -fx-opacity: 0.55; }
+
+.path-label {
+    -fx-text-fill: #6b7280;
+    -fx-background-color: white;
+    -fx-border-color: #e4e7ec;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-padding: 6px 10px;
+}
+
+.load-message {
+    -fx-text-fill: #065f46;
+    -fx-background-color: #e7f6f0;
+    -fx-border-color: #b8e2cf;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-padding: 8px 12px;
+}
+
+.load-message-bad {
+    -fx-text-fill: #9f1239;
+    -fx-background-color: #fdeef2;
+    -fx-border-color: #f6cdd8;
+}

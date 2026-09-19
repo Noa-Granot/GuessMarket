@@ -21,6 +21,7 @@ import java.lang.reflect.Type;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The engine, as seen from a client: every call is an HTTP request.
@@ -54,11 +55,21 @@ public class HttpGuessMarketEngine implements GuessMarketEngine {
     private final ServerConnection server;
     private final Gson gson = new Gson();
 
-    /** The last answer for each thing polled, and the version it arrived with. */
-    private Cached<List<EventDto>> events = Cached.empty();
-    private Cached<List<UserDto>> users = Cached.empty();
-    private Cached<UserStateDto> me = Cached.empty();
-    private final Map<Integer, Cached<EventStateDto>> eventStates = new LinkedHashMap<>();
+    /**
+     * The last answer for each thing polled, and the version it arrived with.
+     *
+     * These are read and written from two threads at once: the poll timer runs
+     * on a background thread while a button click starts another. They are
+     * volatile, and the map is concurrent, so a poll and a click cannot leave
+     * a half-written cache behind. There is deliberately no lock around the
+     * HTTP call itself: two threads may occasionally fetch the same thing
+     * twice, which costs one request, where a lock would let a slow poll block
+     * a click.
+     */
+    private volatile Cached<List<EventDto>> events = Cached.empty();
+    private volatile Cached<List<UserDto>> users = Cached.empty();
+    private volatile Cached<UserStateDto> me = Cached.empty();
+    private final Map<Integer, Cached<EventStateDto>> eventStates = new ConcurrentHashMap<>();
 
     public HttpGuessMarketEngine() {
         this(new ServerConnection());
@@ -176,6 +187,8 @@ public class HttpGuessMarketEngine implements GuessMarketEngine {
 
         String body = server.getIfChanged("/event", Map.of("id", eventId), since);
         if (body == null) {
+            // 204 only ever answers a request that sent a version, and only a
+            // cached copy has one, so held is present here.
             return held.value;
         }
         Cached<EventStateDto> fresh =

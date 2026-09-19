@@ -1,0 +1,57 @@
+The events screen, reading from the server
+==========================================
+
+CHECKED HOW
+    Type-checked against the JavaFX stub, as before. In addition the fxml was
+    cross-checked against the controller: every fx:id has a matching @FXML
+    field of the right type, every onAction has a method, every element is
+    imported. Those three are what usually break an fxml at load time and no
+    compiler looks at them. How JavaFX behaves once it is up is still unseen.
+
+NEW  client/.../fx/events.fxml
+        The exercise 2 layout, with the same filter line and the same columns.
+        Two changes: fx:controller points at the client's controller, and the
+        right half is a placeholder until the detail panel is written.
+
+NEW  client/.../fx/EventsController.java
+        The rows come from the server instead of a local engine, and nothing
+        below the table knows the difference.
+
+        The one rule that matters: listEvents() is an HTTP request, so it runs
+        inside a Task, never on the JavaFX thread. Only the two handlers touch
+        controls, and JavaFX runs those back on its own thread. The poll timer
+        will be the same shape, which is why it is worth reading now.
+
+        A refresh keeps the selected row if it is still there, so a timer
+        cannot pull the selection out from under someone.
+
+        Filtering builds a fresh list rather than using a FilteredList: the
+        table is rebuilt from the server on every refresh anyway, so a plain
+        list is one less thing to keep in step.
+
+NEW  client/.../fx/EventRow.java
+        The exercise 2 view model, unchanged apart from its package.
+
+NEW  client/.../fx/AccountPane.java
+        The load file button and the path, which the sketch puts at the top of
+        the account screen. The file is sent to the server and read there; the
+        path is shown only so the person can see what they picked. A rejected
+        file shows the sentence and one line per problem.
+
+CHANGED  client/.../fx/ClientShell.java
+        Loads events.fxml, hands the controller the engine, and refreshes once
+        so the window opens showing the market rather than empty. The account
+        pane tells the events screen to refresh after an upload; the two do
+        not know about each other.
+
+CHANGED  client/.../fx/client.css
+
+WATCH FOR
+    If the table is there but the window says the events screen could not be
+    loaded, events.fxml did not reach the compiler output. IntelliJ copies
+    non-java files from a source root by default; if it did not, check
+    Settings -> Build -> Compiler -> Resource patterns.
+
+NEXT
+    The detail panel: the event's details, the trade buttons, participations,
+    and one order book pane per option rather than two hardcoded.

@@ -74,6 +74,16 @@ public class ServerConnection {
         return version;
     }
 
+    /** Where this client is talking to, for anything that wants to show it. */
+    public String base() {
+        return base;
+    }
+
+    /** The address assumed when nothing overrides it. */
+    public static String defaultBase() {
+        return DEFAULT_BASE;
+    }
+
     // ---------- the three shapes of request this client makes ----------
 
     /** A GET that always wants an answer. */
