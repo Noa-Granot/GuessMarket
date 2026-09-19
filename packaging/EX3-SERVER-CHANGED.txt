@@ -1,0 +1,74 @@
+The endpoints, the upload, and the client side of HTTP
+======================================================
+
+Everything in this note was compiled before it was sent. The engine and the
+client were compiled against the real libraries; the servlets were compiled
+against a hand written stub of the Jakarta servlet API, because that jar could
+not be downloaded in the sandbox. So the servlets are checked for everything
+except the API's own exact signatures. Expect Tomcat to have the last word.
+
+NEW  server/.../servlets/GuessMarketServlet.java
+        What every endpoint repeats: find out who is calling, refuse when
+        nobody is logged in, and turn an engine failure into a sentence.
+        Identity always comes from the session, never from a parameter.
+
+NEW  server/.../servlets/UploadServlet.java     POST /upload
+        Multipart, one part named "file". The content goes from the request
+        straight into the engine as a stream and is never written anywhere.
+        fileSizeThreshold is set to 10 MB on purpose: under it Tomcat keeps
+        the part in memory, over it Tomcat spills it to a temporary file of
+        its own. These files are a few kilobytes, so nothing reaches a disk.
+        A raw (non multipart) body is accepted too, so the endpoint can be
+        tried from Postman by pasting XML.
+
+NEW  EventsServlet     GET  /events
+NEW  EventServlet      GET  /event?id=N
+NEW  UserStateServlet  GET  /user-state
+NEW  QuoteServlet      GET  /quote?id&option&quantity
+NEW  OpenServlet       POST /open?id
+NEW  BuyServlet        POST /buy?id&option&quantity
+NEW  OrderServlet      POST /order?id&option&side&quantity&price
+NEW  CloseServlet      POST /close?id&option
+
+CHANGED  ServerEngine     now also holds the market version
+CHANGED  Constants        the new parameter names, in one place
+CHANGED  ServletUtils     version header, 204, engine errors, number parameters
+CHANGED  FundsServlet     bumps the version, since others see that balance
+CHANGED  UsersServlet     answers 204 to a client that is up to date
+CHANGED  web/index.html   lists every endpoint, for the marker
+
+POLLING
+    Every answer carries X-Market-Version. A client sends it back as
+    &since=N and gets 204 with an empty body while that is still current.
+    The version is bumped by upload, funds, open, buy, order and close.
+    So a client may poll once a second and the wire stays almost empty
+    until something actually happens.
+
+NEW MODULE  client
+    client/src/guessmarket/client/net/ServerConnection.java
+        The only class that knows about URLs and status codes. Keeps the
+        session cookie, builds the multipart body, and turns a failed answer
+        back into the EngineException or LoadException the screens expect.
+
+    client/src/guessmarket/client/net/HttpGuessMarketEngine.java
+        implements GuessMarketEngine by calling the server. The screens ask
+        for events and get events; they cannot tell it is not local. Holds
+        the last answer for each thing polled and returns it on a 204.
+
+DECISION, worth a line in the readme
+    The HTTP client is the JDK's java.net.http.HttpClient, not OkHttp.
+    The reason is packaging: OkHttp is five jars that all have to sit in the
+    client folder and on the batch file's classpath, and the JDK client is
+    none. Cookies come from java.net.CookieManager in one line, and the
+    multipart body is built by hand in ServerConnection.multipartBody.
+    If the course demo is worth matching more than the jars are worth
+    avoiding, ServerConnection is the only class that changes.
+
+    Without a cookie manager the login appears to work and every later call
+    answers "Log in first.", because each request gets a fresh session.
+    That single line is what makes identity work at all.
+
+STILL TO DO
+    The client module's screens: the login window, the events screen reading
+    from the server, the account screen, and the poll timer. Nothing in this
+    note touches JavaFX.

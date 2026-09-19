@@ -20,6 +20,7 @@ import guessmarket.engine.orderbook.OrderSide;
 import guessmarket.engine.orderbook.Trade;
 import guessmarket.engine.persistence.SystemStateStore;
 import guessmarket.engine.xml.XmlLoader;
+import guessmarket.engine.xml.ex3.Ex3XmlLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,7 @@ import java.util.Map;
 public class GuessMarketEngineImpl implements GuessMarketEngine {
 
     private final XmlLoader loader = new XmlLoader();
+    private final Ex3XmlLoader ex3Loader = new Ex3XmlLoader();
     private final SystemStateStore stateStore = new SystemStateStore();
 
     private MarketSystem system = null;
@@ -93,6 +95,38 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
         MarketSystem candidate = loader.load(path);
         this.system = candidate;
         return candidate.getEvents().size();
+    }
+
+    /**
+     * Exercise 3: add the events of an uploaded file to the market.
+     *
+     * Synchronised because two people can upload at the same moment, and both
+     * the name check and the id numbering would otherwise be read before either
+     * is written. The loader either returns every event or throws, so the loop
+     * below cannot add half a file.
+     */
+    @Override
+    public synchronized int uploadFile(java.io.InputStream content, String uploaderName) {
+        ensureStarted();
+        User uploader = findUser(uploaderName);
+
+        List<String> takenNames = new ArrayList<>();
+        int firstFreeId = 1;
+        for (Event existing : system.getEvents()) {
+            takenNames.add(existing.getName());
+            // One past the highest id, not the lowest gap, because the events
+            // of one file get consecutive numbers and a gap would collide.
+            firstFreeId = Math.max(firstFreeId, existing.getId() + 1);
+        }
+
+        List<Event> added = ex3Loader.load(content, uploader.getName(),
+                firstFreeId, takenNames);
+
+        for (Event event : added) {
+            system.addEvent(event);
+            uploader.addMarketMakerEvent(event.getId());
+        }
+        return added.size();
     }
 
     @Override

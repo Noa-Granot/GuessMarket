@@ -81,9 +81,12 @@ public class Event implements Serializable {
                     "Commission must be between 0 and 90, got " + commissionPercent
                             + " (event " + id + ")");
         }
-        if (optionNames == null || optionNames.size() != 2) {
+        // Exercise 3 asks for events with more than two options, so this is a
+        // floor rather than a fixed number. Everything below works from
+        // options.size(); minting is the one exception and guards itself.
+        if (optionNames == null || optionNames.size() < 2) {
             throw new IllegalArgumentException(
-                    "Every event must have exactly 2 options (event " + id + ")");
+                    "Every event must have at least 2 options (event " + id + ")");
         }
 
         this.id = id;
@@ -395,7 +398,10 @@ public class Event implements Serializable {
         MatchResult result = new MatchResult();
 
         matchAgainstBook(order, result);
-        if (side == OrderSide.BUY && !order.isFilled() && orderBookConfig.allowMint()) {
+        // "The opposite option" only names something when there are two of
+        // them. The loader already refuses such a file; this is the second lock.
+        if (side == OrderSide.BUY && !order.isFilled() && orderBookConfig.allowMint()
+                && options.size() == 2) {
             mintAgainstOppositeOption(order, result);
         }
 

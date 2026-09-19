@@ -1,0 +1,60 @@
+The exercise 3 loader and the accumulating merge
+================================================
+
+NEW  engine/src/guessmarket/engine/xml/ex3/generated/
+        GuessMarket, GMEvents, GMEvent, Comision, GMOptions,
+        GMMethod, GMLMSR, GMOrderBook
+            Bindings for the exercise 3 file. No GM-users, no id element.
+            GMEvent binds BOTH "commission" and "comision"; GMOrderBook binds
+            BOTH "initial" and "inital", because both spellings appear in the
+            material handed out. Whichever the file uses, it loads.
+
+NEW  engine/src/guessmarket/engine/xml/ex3/Ex3XmlLoader.java
+            Reads an InputStream, never a path, so the uploaded content cannot
+            reach the disk. Returns a List<Event> rather than a MarketSystem,
+            because exercise 3 adds to the market instead of replacing it.
+            Validation collects every problem before throwing, so one upload
+            reports every mistake, and a file with one bad event adds none.
+
+CHANGED  engine/.../model/Event.java
+            Options: "exactly 2" became "at least 2".
+            Minting is skipped unless the event has exactly 2 options, since
+            "the opposite option" names nothing otherwise. The loader already
+            refuses such a file; this is the second lock.
+
+CHANGED  engine/.../api/GuessMarketEngine.java
+CHANGED  engine/.../api/GuessMarketEngineImpl.java
+            New method: int uploadFile(InputStream content, String uploaderName)
+            Synchronised. Reads the names already in the market, hands them to
+            the loader, then adds the returned events and makes the uploader
+            their market maker. New ids continue past the highest id in use.
+
+NEW  samples/ex3-small.xml, samples/ex3-multiple.xml
+            The exercise 3 versions of the two handed out files.
+NEW  samples/ex3-three-options.xml
+            Two events with three options each. Should load.
+NEW  samples/ex3-bad.xml
+            Five separate mistakes in one file. Should load nothing.
+
+VALIDATION RULES, exercise 1 rules plus the two the exercise adds
+    name present, description present
+    commission between 0 and 90, type on-purchase or on-close
+    at least two options, none blank, no two the same
+    exactly one of GM-LMSR / GM-order-book
+    b greater than zero
+    d greater than zero, initial present and not negative
+    allow-mint true or false
+    allow-mint true only when the event has exactly two options
+    no event name repeated inside the file
+    no event name already used in the market
+
+DECISIONS, for the readme
+    Minting stays a two option feature. Generalising it means "one buy on
+    every option whose prices together reach d", which is a different matching
+    problem. A three option file that asks for minting is refused with that
+    reason named.
+    The initial stock may be zero. The exercise document says so; the
+    exercise 1 loader rejected it.
+
+NOT DONE HERE
+    The upload servlet, the client, the events screen. This zip is engine only.

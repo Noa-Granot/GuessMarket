@@ -44,6 +44,21 @@ public interface GuessMarketEngine {
      */
     int loadFile(String path);
 
+    /**
+     * Exercise 3: reads an uploaded exercise 3 file and adds its events to the
+     * market. Files accumulate, so nothing already loaded is replaced. The
+     * content is never written to disk.
+     *
+     * The uploader becomes the market maker of every event in the file. If any
+     * event in the file is invalid, none of them are added and a LoadException
+     * is thrown carrying every problem found.
+     *
+     * @param content    the uploaded bytes. The caller closes the stream.
+     * @param uploaderName the logged in user who sent the file
+     * @return how many events were added
+     */
+    int uploadFile(java.io.InputStream content, String uploaderName);
+
     List<EventDto> listEvents();
 
     List<UserDto> listUsers();

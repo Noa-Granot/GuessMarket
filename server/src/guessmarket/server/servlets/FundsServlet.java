@@ -44,6 +44,9 @@ public class FundsServlet extends HttpServlet {
 
         try {
             double balance = ServerEngine.get().addFunds(username, amount);
+            // Other people see this balance in the users list, so the market
+            // has changed as far as their polling is concerned.
+            ServerEngine.bumpVersion();
             ServletUtils.writeJson(response, balance);
         } catch (EngineException e) {
             ServletUtils.writeError(response, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());

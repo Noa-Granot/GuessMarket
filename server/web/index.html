@@ -6,20 +6,49 @@
     <style>
         body { font-family: system-ui, sans-serif; margin: 40px; color: #263043; }
         h1 { font-size: 22px; }
+        h2 { font-size: 15px; margin-top: 26px; color: #566179; text-transform: uppercase;
+             letter-spacing: .05em; }
         code { background: #f2f4f7; padding: 2px 5px; border-radius: 3px; }
         li { margin-bottom: 6px; line-height: 1.5; }
+        p.note { color: #566179; font-size: 14px; max-width: 46em; }
     </style>
 </head>
 <body>
     <h1>Guess Market server</h1>
-    <p>The server is running. The JavaFX client talks to the addresses below;
+    <p>The server is running. The JavaFX clients talk to the addresses below;
        this page only confirms the war deployed.</p>
+
+    <h2>Who you are</h2>
     <ul>
         <li><code>POST /login?username=NAME</code> registers a name and starts a session</li>
         <li><code>GET /whoami</code> the name this session is logged in as</li>
-        <li><code>GET /users</code> everyone in the system</li>
-        <li><code>POST /funds?amount=100</code> adds money to your own account</li>
-        <li><code>GET /logout</code> ends the session</li>
+        <li><code>GET /logout</code> ends the session; the user stays in the market</li>
     </ul>
+
+    <h2>Reading the market</h2>
+    <ul>
+        <li><code>GET /events</code> every event</li>
+        <li><code>GET /event?id=1</code> one event in full: books, trades, holdings, prices</li>
+        <li><code>GET /users</code> everyone: name, balance, whether they are a market maker</li>
+        <li><code>GET /user-state</code> your own account in full</li>
+        <li><code>GET /quote?id=1&amp;option=0&amp;quantity=100</code> what a purchase would cost</li>
+    </ul>
+
+    <h2>Changing the market</h2>
+    <ul>
+        <li><code>POST /upload</code> multipart, one part named <code>file</code></li>
+        <li><code>POST /funds?amount=1000</code> adds money to your own account</li>
+        <li><code>POST /open?id=1</code> opens your event for trading</li>
+        <li><code>POST /buy?id=1&amp;option=0&amp;quantity=100</code> buys shares of an LMSR event</li>
+        <li><code>POST /order?id=2&amp;option=0&amp;side=Buy&amp;quantity=50&amp;price=0.4</code> submits an order</li>
+        <li><code>POST /close?id=1&amp;option=0</code> closes your event on the winning option</li>
+    </ul>
+
+    <h2>Polling</h2>
+    <p class="note">Every answer carries the market version in the
+       <code>X-Market-Version</code> header. A client that sends it back as
+       <code>&amp;since=N</code> gets <code>204 No Content</code> while that is still
+       the current version, so a poll every second costs almost nothing until
+       something actually changes.</p>
 </body>
 </html>

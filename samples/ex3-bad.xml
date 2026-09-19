@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Guess-Market xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="GM-EX3-Schema.xsd">
+<GM-events>
+	<GM-event name="Mujtaba is Dead">
+		<description>Same name as the event in small.xml, so this one is refused once small.xml has been uploaded.</description>
+		<commission type="on-purchase">5</commission>
+		<GM-options>
+			<GM-option>Yes</GM-option>
+			<GM-option>No</GM-option>
+		</GM-options>
+		<GM-method>
+			<GM-LMSR>
+				<b>100</b>
+			</GM-LMSR>
+		</GM-method>
+	</GM-event>
+	<GM-event name="Minting With Three Options">
+		<description>Three options and allow-mint true, which the loader refuses because minting has no opposite option to pair with.</description>
+		<commission type="on-close">120</commission>
+		<GM-options>
+			<GM-option>One</GM-option>
+			<GM-option>Two</GM-option>
+			<GM-option>Three</GM-option>
+		</GM-options>
+		<GM-method>
+			<GM-order-book allow-mint="true" initial="100" d="1"/>
+		</GM-method>
+	</GM-event>
+	<GM-event name="Minting With Three Options">
+		<description>The same name twice inside one file.</description>
+		<commission type="on-close">10</commission>
+		<GM-options>
+			<GM-option>Only one option</GM-option>
+		</GM-options>
+		<GM-method>
+			<GM-LMSR>
+				<b>0</b>
+			</GM-LMSR>
+		</GM-method>
+	</GM-event>
+</GM-events>
+</Guess-Market>

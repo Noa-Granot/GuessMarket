@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Guess-Market xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="GM-EX3-Schema.xsd">
+<GM-events>
+	<GM-event name="Election Winner 2026">
+		<description>Which party takes the most seats. Three options, so this file only loads once the engine accepts more than two.</description>
+		<commission type="on-close">10</commission>
+		<GM-options>
+			<GM-option>Party A</GM-option>
+			<GM-option>Party B</GM-option>
+			<GM-option>Party C</GM-option>
+		</GM-options>
+		<GM-method>
+			<GM-LMSR>
+				<b>100</b>
+			</GM-LMSR>
+		</GM-method>
+	</GM-event>
+	<GM-event name="Three Horse Race">
+		<description>An order book event with three options and minting switched off, which is the only order book shape a three option event may take.</description>
+		<commission type="on-purchase">5</commission>
+		<GM-options>
+			<GM-option>Red</GM-option>
+			<GM-option>Green</GM-option>
+			<GM-option>Blue</GM-option>
+		</GM-options>
+		<GM-method>
+			<GM-order-book allow-mint="false" initial="100" d="1"/>
+		</GM-method>
+	</GM-event>
+</GM-events>
+</Guess-Market>

@@ -24,6 +24,10 @@ public class UsersServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
+        if (ServletUtils.isUpToDate(request)) {
+            ServletUtils.writeNotModified(response);
+            return;
+        }
         List<UserDto> users = ServerEngine.get().listUsers();
         ServletUtils.writeJson(response, users);
     }
