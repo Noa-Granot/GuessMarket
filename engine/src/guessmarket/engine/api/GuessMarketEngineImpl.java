@@ -82,7 +82,7 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
             throw new EngineException("The amount to add must be above zero.");
         }
         User user = findUser(userName);
-        user.getAccount().deposit(amount);
+        user.getAccount().deposit(amount, "Funds you added");
         return user.getAccount().getBalance();
     }
 
@@ -183,12 +183,22 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
             balancePoints.add(new PointDto(point.step(), point.balance()));
         }
 
+        List<MovementDto> movements = new ArrayList<>();
+        for (guessmarket.engine.model.Movement movement : user.getAccount().getMovements()) {
+            movements.add(new MovementDto(movement.serial(), movement.reason(),
+                    movement.change(), movement.balanceAfter()));
+        }
+        // Newest first, because the last thing that happened is the thing
+        // somebody watching their account wants to see.
+        java.util.Collections.reverse(movements);
+
         return new UserStateDto(
                 user.getName(),
                 user.getAccount().getBalance(),
                 user.isMarketMaker(),
                 roles,
-                new SeriesDto(user.getName(), balancePoints));
+                new SeriesDto(user.getName(), balancePoints),
+                movements);
     }
 
     private List<HoldingDto> holdingsOf(Event event, String userName) {
@@ -236,7 +246,8 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
         }
 
         try {
-            user.getAccount().withdraw(cost);
+            user.getAccount().withdraw(cost,
+                    "Opened \"" + event.getName() + "\"");
             event.open(cost);
         } catch (RuntimeException e) {
             throw new EngineException(e.getMessage(), e);
@@ -277,7 +288,9 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
 
         Transaction transaction;
         try {
-            user.getAccount().withdraw(total);
+            user.getAccount().withdraw(total, String.format(
+                    "Bought %d of %s in \"%s\"",
+                    quantity, event.getOptions().get(optionIndex).getName(), event.getName()));
             transaction = event.buy(userName, optionIndex, quantity);
         } catch (InsufficientFundsException e) {
             throw new EngineException(userName + " does not have enough money: " + e.getMessage(), e);
@@ -378,17 +391,22 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
             double amount = entry.getValue();
             User user = findUser(entry.getKey());
             if (amount < 0) {
-                user.getAccount().withdraw(-amount);
+                user.getAccount().withdraw(-amount,
+                        "Bought in \"" + event.getName() + "\"");
             } else if (amount > 0) {
-                user.getAccount().deposit(amount);
+                user.getAccount().deposit(amount,
+                        "Sold in \"" + event.getName() + "\"");
             }
         }
         if (result.getIntoEventAccount() > 0) {
             event.getAccount().deposit(result.getIntoEventAccount());
         }
         if (result.getCommissionToMarketMaker() > 0) {
+            // This is the line the exercise asks about by name: money arriving
+            // in your account because somebody else traded.
             findUser(event.getMarketMakerName()).getAccount()
-                    .deposit(result.getCommissionToMarketMaker());
+                    .deposit(result.getCommissionToMarketMaker(),
+                            "Commission from a trade in \"" + event.getName() + "\"");
             event.addCommissionCollected(result.getCommissionToMarketMaker());
         }
     }
@@ -439,10 +457,13 @@ public class GuessMarketEngineImpl implements GuessMarketEngine {
         // The winners are paid, then the commission and the leftover go to the MM.
         List<PayoutDto> payouts = new ArrayList<>();
         for (Map.Entry<String, Double> entry : outcome.payoutsByUser().entrySet()) {
-            findUser(entry.getKey()).getAccount().deposit(entry.getValue());
+            findUser(entry.getKey()).getAccount().deposit(entry.getValue(),
+                    "Winnings from \"" + event.getName() + "\"");
             payouts.add(new PayoutDto(entry.getKey(), entry.getValue()));
         }
-        findUser(event.getMarketMakerName()).getAccount().deposit(outcome.returnedToMarketMaker());
+        findUser(event.getMarketMakerName()).getAccount().deposit(
+                outcome.returnedToMarketMaker(),
+                "Closed \"" + event.getName() + "\": commission and what was left");
 
         return new CloseReceipt(
                 outcome.winningOptionName(),

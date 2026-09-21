@@ -151,6 +151,11 @@ public class LoginPane extends VBox {
         }
     }
 
+    /** Why the person is looking at the login screen again, shown before they type. */
+    public void explain(String message) {
+        showError(message);
+    }
+
     private void showError(String message) {
         errorLabel.setText(message);
         errorLabel.setVisible(true);

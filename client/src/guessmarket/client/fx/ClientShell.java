@@ -1,7 +1,12 @@
 package guessmarket.client.fx;
 
 import guessmarket.client.net.HttpGuessMarketEngine;
+import guessmarket.client.net.ServerUnreachableException;
+import guessmarket.client.net.SessionLostException;
 
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.concurrent.Task;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -15,9 +20,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.function.Consumer;
 
 /**
  * What the window shows once somebody is logged in: the two screens from the
@@ -31,22 +39,106 @@ import java.net.URL;
  * stand in for several people; here a person is whoever the session says they
  * are, and the only way to be somebody else is to be a different client.
  */
-public class ClientShell extends BorderPane {
+public class ClientShell extends BorderPane implements ConnectionWatch {
 
     private final HttpGuessMarketEngine engine;
     private final String userName;
     private final Runnable onLoggedOut;
+    private final Consumer<String> onSessionLost;
+
+    /**
+     * The strip under the header that says the server is gone. Hidden while
+     * the server answers; shown by the first poll that finds nobody there,
+     * hidden again by the first one that gets through.
+     */
+    private final Label connectionBanner = new Label();
+
+    /** Set once, so the two screens failing in the same tick leave only once. */
+    private boolean leaving = false;
 
     private EventsController eventsController;
+    private AccountPane accountPane;
 
-    public ClientShell(HttpGuessMarketEngine engine, String userName, Runnable onLoggedOut) {
+    /**
+     * The pull the exercise asks for.
+     *
+     * Once a second, both screens ask the server whether anything has changed.
+     * Almost every tick the answer is 204 and nothing is redrawn, because the
+     * engine hands back the copy it already had and the screens compare it by
+     * identity. So a client that nobody is touching costs one empty request a
+     * second, and a trade in another client appears here without anyone
+     * clicking.
+     */
+    private static final double POLL_SECONDS = 1.0;
+    private Timeline poll;
+
+    public ClientShell(HttpGuessMarketEngine engine, String userName,
+                       Runnable onLoggedOut, Consumer<String> onSessionLost) {
         this.engine = engine;
         this.userName = userName;
         this.onLoggedOut = onLoggedOut;
+        this.onSessionLost = onSessionLost;
 
         getStyleClass().add("shell");
-        setTop(buildHeader());
+        setTop(new VBox(buildHeader(), buildBanner()));
         setCenter(buildTabs());
+        if (eventsController != null) {
+            eventsController.setConnectionWatch(this);
+        }
+        accountPane.setConnectionWatch(this);
+        startPolling();
+    }
+
+    private Label buildBanner() {
+        connectionBanner.getStyleClass().add("connection-banner");
+        connectionBanner.setWrapText(true);
+        connectionBanner.setMaxWidth(Double.MAX_VALUE);
+        connectionBanner.setMinHeight(Region.USE_PREF_SIZE);
+        connectionBanner.setPadding(new Insets(8, 14, 8, 14));
+        connectionBanner.setVisible(false);
+        connectionBanner.setManaged(false);
+        return connectionBanner;
+    }
+
+    // ---------- what the polls report ----------
+
+    @Override
+    public void reached() {
+        connectionBanner.setVisible(false);
+        connectionBanner.setManaged(false);
+    }
+
+    /**
+     * Only two failures are the window's business. Anything else is an
+     * ordinary refusal and stays with the screen that asked.
+     */
+    @Override
+    public void failed(Throwable cause) {
+        if (cause instanceof SessionLostException) {
+            sessionLost();
+        } else if (cause instanceof ServerUnreachableException) {
+            connectionBanner.setText("Lost contact with the server. "
+                    + "Trying again every second; nothing you do will be sent until it answers.");
+            connectionBanner.setVisible(true);
+            connectionBanner.setManaged(true);
+        }
+    }
+
+    /**
+     * The server no longer knows this session. While logged in, that means it
+     * was restarted, and a restarted server has an empty market with nobody
+     * in it. Showing the old market would be showing something that is gone.
+     */
+    private void sessionLost() {
+        if (leaving) {
+            return;
+        }
+        leaving = true;
+        if (poll != null) {
+            poll.stop();
+        }
+        onSessionLost.accept("The server no longer knows you. It was most likely restarted, "
+                + "and a restarted server starts with an empty market. Log in again.");
     }
 
     private HBox buildHeader() {
@@ -76,7 +168,8 @@ public class ClientShell extends BorderPane {
 
         // Uploading changes what the events screen shows, so the two are
         // introduced to each other here rather than knowing about each other.
-        Tab account = new Tab("Account", new AccountPane(engine, this::refreshEvents));
+        accountPane = new AccountPane(engine, userName, this::refreshEvents);
+        Tab account = new Tab("Account", accountPane);
         account.setClosable(false);
 
         TabPane tabs = new TabPane();
@@ -103,6 +196,8 @@ public class ClientShell extends BorderPane {
             javafx.scene.Node screen = loader.load();
             eventsController = loader.getController();
             eventsController.setEngine(engine);
+            eventsController.setUserName(userName);
+            eventsController.setOnMarketChanged(this::refreshAccount);
             // The first look at the market, before anybody touches anything.
             eventsController.refresh();
             return screen;
@@ -115,6 +210,27 @@ public class ClientShell extends BorderPane {
     private void refreshEvents() {
         if (eventsController != null) {
             eventsController.refresh();
+        }
+    }
+
+    /** Starts the pull. Called once the two screens exist. */
+    private void startPolling() {
+        poll = new Timeline(new KeyFrame(Duration.seconds(POLL_SECONDS), event -> {
+            if (eventsController != null) {
+                eventsController.pollTick();
+            }
+            if (accountPane != null) {
+                accountPane.pollTick();
+            }
+        }));
+        poll.setCycleCount(Animation.INDEFINITE);
+        poll.play();
+    }
+
+    /** A trade changes the balance, so the account screen hears about it too. */
+    private void refreshAccount() {
+        if (accountPane != null) {
+            accountPane.refresh();
         }
     }
 
@@ -147,6 +263,11 @@ public class ClientShell extends BorderPane {
      */
     private void logout(Button button) {
         button.setDisable(true);
+        leaving = true;
+        // Stop asking the server about a session that is about to end.
+        if (poll != null) {
+            poll.stop();
+        }
 
         Task<Void> task = new Task<>() {
             @Override

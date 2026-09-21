@@ -44,14 +44,22 @@ public class GuessMarketClientApp extends Application {
 
     /** The login screen, and what to do once a name has been accepted. */
     private void showLogin() {
+        showLogin(null);
+    }
+
+    /** The login screen with a sentence saying why the person is back on it. */
+    private void showLogin(String reason) {
         LoginPane login = new LoginPane(engine, this::showMarket);
+        if (reason != null) {
+            login.explain(reason);
+        }
         setScene(login, 460, 460);
         stage.setTitle(TITLE);
     }
 
     /** The main screen, and what to do when the person logs out. */
     private void showMarket(String userName) {
-        ClientShell shell = new ClientShell(engine, userName, this::showLogin);
+        ClientShell shell = new ClientShell(engine, userName, this::showLogin, this::showLogin);
         setScene(shell, 1100, 700);
         stage.setTitle(TITLE + " - " + userName);
         stage.centerOnScreen();

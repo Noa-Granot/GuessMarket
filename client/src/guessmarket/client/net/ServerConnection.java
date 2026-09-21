@@ -195,8 +195,10 @@ public class ServerConnection {
         try {
             response = http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         } catch (IOException e) {
-            throw new EngineException("The server could not be reached at " + base
-                    + ". Check that Tomcat is running. (" + e.getMessage() + ")", e);
+            // A refused connection has no message of its own, so none is added.
+            String detail = e.getMessage() == null ? "" : " (" + e.getMessage() + ")";
+            throw new ServerUnreachableException("The server could not be reached at " + base
+                    + ". Check that Tomcat is running." + detail, e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new EngineException("The request was interrupted.", e);
@@ -207,6 +209,10 @@ public class ServerConnection {
         int status = response.statusCode();
         if (status >= 200 && status < 300) {
             return response;
+        }
+        if (status == 401) {
+            String body = response.body() == null ? "" : response.body().strip();
+            throw new SessionLostException(body.isEmpty() ? "Log in first." : body);
         }
         throw asException(response.body());
     }

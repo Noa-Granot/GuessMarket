@@ -11,7 +11,6 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import java.lang.String?>
 
@@ -121,17 +120,52 @@
             </center>
         </BorderPane>
 
-        <!-- Right half of the sketch: event details and trade. Next. -->
+        <!-- Right half of the sketch: event details and trade -->
         <ScrollPane fitToWidth="true" styleClass="detail-scroll">
             <content>
                 <VBox spacing="8.0" styleClass="detail-pane">
                     <children>
+
                         <Label fx:id="detailTitle" styleClass="detail-title" wrapText="true"
                                text="Select an event to see its details"/>
                         <Label fx:id="detailSubtitle" wrapText="true" styleClass="detail-subtitle"/>
-                        <Region prefHeight="8.0"/>
-                        <Label styleClass="detail-subtitle" wrapText="true"
-                               text="The details, the trade buttons and one order book pane per option go here."/>
+
+                        <HBox fx:id="actionBar" spacing="8.0" styleClass="action-bar"
+                              visible="false" managed="false">
+                            <children>
+                                <Button fx:id="openButton" text="Open event" onAction="#onOpenEvent"/>
+                                <Button fx:id="buyButton" text="Buy shares" onAction="#onBuyShares"/>
+                                <Button fx:id="orderButton" text="Place order" onAction="#onPlaceOrder"/>
+                                <Button fx:id="closeButton" text="Close event" onAction="#onCloseEvent"/>
+                            </children>
+                        </HBox>
+                        <Label fx:id="actionHint" wrapText="true" styleClass="detail-subtitle"/>
+
+                        <!-- shown for LMSR events -->
+                        <VBox fx:id="lmsrBox" spacing="4.0" managed="false" visible="false"/>
+
+                        <!--
+                            Shown for order book events: one pane per option, however
+                            many there are. Exercise 2 had two hardcoded panes here;
+                            the panes are now built from the event, and the scroll bar
+                            is what keeps three or more of them readable.
+                        -->
+                        <VBox fx:id="orderBookBox" spacing="8.0" managed="false" visible="false">
+                            <children>
+                                <ScrollPane fx:id="booksScroll" fitToHeight="true"
+                                            styleClass="books-scroll" prefHeight="260.0">
+                                    <content>
+                                        <HBox fx:id="booksRow" spacing="10.0"/>
+                                    </content>
+                                </ScrollPane>
+                            </children>
+                        </VBox>
+
+                        <VBox fx:id="tradesBox" spacing="3.0" managed="false" visible="false"/>
+
+                        <VBox fx:id="participationBox" spacing="3.0" styleClass="participation-pane"
+                              managed="false" visible="false"/>
+
                     </children>
                 </VBox>
             </content>

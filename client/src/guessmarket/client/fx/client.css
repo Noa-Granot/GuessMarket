@@ -203,3 +203,77 @@
     -fx-background-color: #fdeef2;
     -fx-border-color: #f6cdd8;
 }
+
+/* ---------- the details panel ---------- */
+
+.action-bar {
+    -fx-padding: 4px 0;
+}
+
+.action-bar .button {
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+}
+
+.section-title {
+    -fx-font-weight: bold;
+    -fx-text-fill: #263043;
+    -fx-padding: 6px 0 0 0;
+}
+
+.books-scroll {
+    -fx-background-color: transparent;
+}
+
+.books-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.book-pane {
+    -fx-background-color: white;
+    -fx-border-color: #e4e7ec;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 10px;
+}
+
+.participation-pane {
+    -fx-background-color: white;
+    -fx-border-color: #e4e7ec;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 10px;
+}
+
+.funds-bar {
+    -fx-padding: 6px 0;
+}
+
+.balance-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #263043;
+    -fx-min-width: 150px;
+}
+
+.account-card {
+    -fx-background-color: white;
+    -fx-border-color: #e4e7ec;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 10px 12px;
+}
+
+.role-heading {
+    -fx-font-weight: bold;
+    -fx-text-fill: #263043;
+    -fx-padding: 4px 0 0 0;
+}
+
+/* Across the top of the window while the server is not answering. */
+.connection-banner {
+    -fx-background-color: #fdeef2;
+    -fx-text-fill: #9b1c3a;
+    -fx-border-color: #f3c2cf;
+    -fx-border-width: 0 0 1 0;
+    -fx-font-weight: bold;
+}

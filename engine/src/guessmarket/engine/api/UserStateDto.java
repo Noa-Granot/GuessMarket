@@ -7,5 +7,6 @@ public record UserStateDto(String name,
                            double balance,
                            boolean isMarketMaker,
                            List<EventRoleDto> events,
-                           SeriesDto balanceHistory) {
+                           SeriesDto balanceHistory,
+                           java.util.List<MovementDto> movements) {
 }
